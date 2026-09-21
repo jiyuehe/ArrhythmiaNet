@@ -21,16 +21,11 @@ try:
 except ImportError:
     ME = None
 
-def _materialize_npz(npz_obj):
-    """Eagerly read all arrays from an NpzFile into a plain dict."""
-    return {k: npz_obj[k] for k in npz_obj.files}
-
-
 def _load_npz_with_numpy2_pickle_compat(file_path, allow_pickle=True):
     """Load npz and materialize arrays with NumPy 2.x -> 1.x pickle compatibility."""
     try:
         data = np.load(file_path, allow_pickle=allow_pickle)
-        return _materialize_npz(data)
+        return {k: data[k] for k in data.files}
     except ModuleNotFoundError as e:
         if "numpy._core" not in str(e):
             raise
@@ -41,7 +36,7 @@ def _load_npz_with_numpy2_pickle_compat(file_path, allow_pickle=True):
         sys.modules.setdefault('numpy._core._multiarray_umath', np.core._multiarray_umath)
 
         data = np.load(file_path, allow_pickle=allow_pickle)
-        return _materialize_npz(data)
+        return {k: data[k] for k in data.files}
 
 def categorize_files_into_train_validation_test(data_folder_simulation):
     train_validation_test_file_names = 'train_validation_test_file_names.txt'
@@ -135,13 +130,13 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
     for i in range(start_idx, end_idx):
         # load electrode coordinates
         # ------------------------------
-        clinical_data_file_name = name_prefixes[i] + '_clinical_data.npz'
-        map_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / clinical_data_file_name, allow_pickle=True)
+        mesh_file_name = name_prefixes[i] + '_mesh.npz'
+        mesh_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / mesh_file_name, allow_pickle=True)
 
-        voxel3mm_1mm_spacing = map_data['voxel3mm_1mm_spacing']
+        voxel3mm_1mm_spacing = mesh_data['voxel3mm_1mm_spacing']
         node = voxel3mm_1mm_spacing - np.round(voxel3mm_1mm_spacing.mean(axis=0)).astype(int) # center the coordinates at the origin and convert to integers. shape (n_nodes, 3)
         n_nodes = node.shape[0]
-        
+
         b = i - start_idx # batch index, 1 batch corresponds to 1 simulation on 1 geometry
         batch_indices = torch.full((n_nodes, 1), b, dtype=torch.int32)
         temp = torch.cat([batch_indices, torch.from_numpy(node).int()], dim=1) # shape (n_nodes, 4) = [batch_indices | x | y | z]
@@ -151,7 +146,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         # ------------------------------
         if data_type == 'simulation':
             # randomly make some electrodes bad
-            bad_electrode_ratio = 0.5
+            bad_electrode_ratio = 0.1
             n_bad_electrode = int(bad_electrode_ratio * n_nodes)
             non_e_id = np.random.choice(n_nodes, n_bad_electrode, replace=False)
 
@@ -163,6 +158,10 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
 
             x[:, non_e_id] = 0 # set electrograms of bad electrode nodes to 0. the bad electrode nodes are randomly selected
         elif data_type == 'clinical':
+            # load data
+            clinical_data_file_name = name_prefixes[i] + '_catheter.npz'
+            map_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / clinical_data_file_name, allow_pickle=True)
+
             # find the good electrode nodes that have good signals
             activation_time = map_data['clinical_activation_uni']
             good_e_id = [i for i, x in enumerate(activation_time) if x != 0]
@@ -183,9 +182,11 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         # load target activation time
         # ------------------------------
         if data_type == 'simulation' and train_predict_type == 'train':
-            y = simulation_results['lat_electrode'].astype(np.float32)
+            # y = simulation_results['lat_electrode'].astype(np.float32)
+            y = simulation_results['phase_electrode'].astype(np.float32)
         elif data_type == 'simulation' and train_predict_type == 'predict':
-            y = simulation_results['lat_electrode'].astype(np.float32)
+            # y = simulation_results['lat_electrode'].astype(np.float32)
+            y = simulation_results['phase_electrode'].astype(np.float32)
             y[non_e_id] = np.nan # set activation time of nodes without activation to nan
         elif data_type == 'clinical':
             y = np.full(n_nodes, np.nan, dtype=np.float32)
@@ -200,10 +201,10 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
             import matplotlib.pyplot as plt
             plot_folder = parameters['result_folder']
 
-            def plot_map(node, lat):
+            def plot_map(node, val):
                 plt.figure()
                 ax = plt.axes(projection='3d')
-                ax.scatter(node[:, 0], node[:, 1], node[:, 2], c=lat, marker='.', s=30, cmap='jet_r')
+                ax.scatter(node[:, 0], node[:, 1], node[:, 2], c=val, marker='.', s=30, cmap='jet_r')
 
                 # force equal scale across x/y/z so geometry is not distorted.
                 x_mid = 0.5 * (node[:, 0].max() + node[:, 0].min())
@@ -226,7 +227,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
 
             # plot activation time map using y as activation times
             plt = plot_map(node, y)
-            plt.savefig(plot_folder / f'activation_time_map.png')
+            plt.savefig(plot_folder / f'map.png')
             plt.close()
 
             # plot activation time map using x to find the activation times

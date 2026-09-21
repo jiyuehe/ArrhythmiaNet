@@ -23,7 +23,9 @@ def mse_loss(predictions, targets):
     pred_features = predictions.F
     target_features = targets.F
 
-    loss = nn.functional.mse_loss(pred_features, target_features)
+    valid = torch.isfinite(target_features) # NaNs are not valid
+
+    loss = nn.functional.mse_loss(pred_features[valid], target_features[valid])
 
     return loss
 
