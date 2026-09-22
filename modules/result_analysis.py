@@ -94,19 +94,22 @@ def plot_truth_and_predicted_activation_time_map(truth_data, predicted_data, fil
         elif data_type == 'clinical':
             name_prefix = file_names_test[sample_id].split('_clinical_data')[0]
 
-        data = np.load(parameters['data_folder_patient'] / f'{name_prefix}_clinical_data.npz', allow_pickle=True)
-        map_data = {k: data[k] for k in data.files}
-        node = map_data['voxel3mm_1mm_spacing']
+        mesh_data = np.load(parameters['data_folder_patient'] / f'{name_prefix}_mesh.npz', allow_pickle=True)
+        node = mesh_data['voxel3mm_1mm_spacing']
+
         node = node - np.round(node.mean(axis=0)).astype(int) # shape (n_nodes, 3)
         n_nodes = node.shape[0]
 
         # electrode voxel ids
         if data_type == 'simulation':
             # randomly make some electrodes bad
-            bad_electrode_ratio = 0.5
+            bad_electrode_ratio = 0
             n_bad_electrode = int(bad_electrode_ratio * n_nodes)
             non_e_id = np.random.choice(n_nodes, n_bad_electrode, replace=False)
         elif data_type == 'clinical':
+            data = np.load(parameters['data_folder_patient'] / f'{name_prefix}_clinical_data.npz', allow_pickle=True)
+            map_data = {k: data[k] for k in data.files}
+
             # find the good electrode nodes that have good signals
             act = map_data['clinical_activation_uni']
             good_e_id = [i for i, x in enumerate(act) if x != 0]
@@ -125,7 +128,8 @@ def plot_truth_and_predicted_activation_time_map(truth_data, predicted_data, fil
         data_min = np.nanmin(data_truth)
         data_max = np.nanmax(data_truth)
         data_threshold = data_min-0.1
-        converted_color = common.convert_value_to_red_blue(data_truth, data_min, data_max, data_threshold)
+        # converted_color = common.convert_value_to_red_blue(data_truth, data_min, data_max, data_threshold)
+        converted_color = common.convert_value_to_red_magenta(data_truth, data_min, data_max, data_threshold)
 
         # only color and show voxels with non-NaN data_truth
         valid_mask = ~np.isnan(data_truth)
@@ -154,7 +158,7 @@ def plot_truth_and_predicted_activation_time_map(truth_data, predicted_data, fil
         plt.axis('off')
         plt.tight_layout()
 
-        image_file_name = parameters['result_folder'] / f'{file_names_test[sample_id][:-4]}_lat_truth.png'
+        image_file_name = parameters['result_folder'] / f'{file_names_test[sample_id][:-4]}_map_truth.png'
         plt.savefig(image_file_name, dpi=100, bbox_inches="tight", pad_inches=0)
         plt.close()
         common.crop_image(image_file_name)
@@ -163,7 +167,8 @@ def plot_truth_and_predicted_activation_time_map(truth_data, predicted_data, fil
         data_min = np.nanmin(data_predicted)
         data_max = np.nanmax(data_predicted)
         data_threshold = data_min-0.1
-        converted_color = common.convert_value_to_red_blue(data_predicted, data_min, data_max, data_threshold)
+        # converted_color = common.convert_value_to_red_blue(data_predicted, data_min, data_max, data_threshold)
+        converted_color = common.convert_value_to_red_magenta(data_predicted, data_min, data_max, data_threshold)
 
         fig = plt.figure(figsize=(8, 6), dpi=100)
         ax = plt.axes(projection='3d')
@@ -173,7 +178,7 @@ def plot_truth_and_predicted_activation_time_map(truth_data, predicted_data, fil
         plt.axis('off')
         plt.tight_layout()
 
-        image_file_name = parameters['result_folder'] / f'{file_names_test[sample_id][:-4]}_lat_predict_MAE_{error_mae:.4f}.png'
+        image_file_name = parameters['result_folder'] / f'{file_names_test[sample_id][:-4]}_map_predict_MAE_{error_mae:.4f}.png'
         plt.savefig(image_file_name, dpi=100, bbox_inches="tight", pad_inches=0)
         plt.close()
         common.crop_image(image_file_name)
