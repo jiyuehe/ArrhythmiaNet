@@ -28,7 +28,7 @@ import sys
 workspace_root = Path().resolve().parent # Path().resolve() returns an absolute path, the full path
 if str(workspace_root) not in sys.path:
     sys.path.insert(0, str(workspace_root))
-import common
+import modules.common as common
 
 import plotly.graph_objects as go # pip install plotly
 import plotly.io as pio

@@ -43,7 +43,7 @@ def categorize_files_into_train_validation_test(data_folder_simulation):
 
     if not (data_folder_simulation / train_validation_test_file_names).exists(): # if file not exist
         # grab file names of the simulation results
-        simulation_files = list(data_folder_simulation.glob('*.npz'))
+        simulation_files = list(data_folder_simulation.glob('*_simulation_results_*.npz'))
 
         n_samples = len(simulation_files)
 

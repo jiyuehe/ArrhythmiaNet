@@ -20,11 +20,7 @@ script_dir = Path(script_dir)
 
 # add the workspace root to Python path
 from platform import node
-import sys
-workspace_root = Path().resolve().parent.parent # Path().resolve() returns an absolute path, the full path
-if str(workspace_root) not in sys.path:
-    sys.path.insert(0, str(workspace_root))
-import PyHeartSim.common as common
+import modules.common as common
 
 import matplotlib.pyplot as plt 
 import numpy as np

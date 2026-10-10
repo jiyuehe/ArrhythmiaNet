@@ -30,15 +30,14 @@ import numpy as np
 
 #%%
 # mode settings
-train_predict_flag = 0 # 1: only do training; 0: only do prediction
+train_predict_flag = 1 # 1: only do training; 0: only do prediction
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
-continue_training = 0 # 0: train from scratch; 1: load best_unet_model.pth and continue training
 
 # time samples
 parameters = {}
-parameters['t_start'] = 300
+parameters['t_start'] = 500 - 150
 parameters['time_step'] = 1
-parameters['n_timepoints'] = 500
+parameters['n_timepoints'] = 500 + 150
 parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
 
 # training parameters
@@ -48,7 +47,7 @@ parameters['epochs'] = 100 # maximum epochs (training may stop earlier with earl
 parameters['early_stopping_patience'] = 10 # stop training if no improvement for this many epochs
 
 parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results')
-parameters['data_folder_patient'] = Path('/home/j/Desktop/hdd/share_folder/carto3_files/data npz')
+parameters['data_folder_patient'] = Path('/home/j/Documents/box/carto3_files/data_npz')
 parameters['result_folder'] = script_dir / 'result'
 parameters['result_folder'].mkdir(exist_ok=True)
 
@@ -89,6 +88,7 @@ if debug_flag == 1:
 if train_predict_flag == 1:
    print('train model')
 
+   continue_training = 0 # 0: train from scratch; 1: load best_unet_model.pth and continue training
    if continue_training == 1: # load pre-trained model to continue training
       model_path = parameters['result_folder'] / 'best_unet_model.pth'
       print(f'loading pre-trained model from {model_path}')
