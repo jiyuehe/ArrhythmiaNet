@@ -41,7 +41,7 @@ parameters['n_timepoints'] = 500 + 150
 parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
 
 # training parameters
-parameters['batch_size'] = 20 # number of training samples (electrograms-activation_maps pairs of 1 simulation on 1 geometry) processed together in one pass during training
+parameters['batch_size'] = 10 # number of training samples (electrograms-activation_maps pairs of 1 simulation on 1 geometry) processed together in one pass during training
 parameters['learning_rate'] = 1e-4 # too small or too big are both bad
 parameters['epochs'] = 100 # maximum epochs (training may stop earlier with early stopping)
 parameters['early_stopping_patience'] = 10 # stop training if no improvement for this many epochs

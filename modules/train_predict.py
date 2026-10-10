@@ -96,7 +96,7 @@ def train_model(parameters):
         
         # for each batch in training data
         for batch_idx in range(n_train_batches):
-            print(f'  Training batch {batch_idx+1}/{n_train_batches}          ', end='\r') # '\r' to overwrite the same line
+            print(f'  Training batch {batch_idx+1}/{n_train_batches}. Accumulative training loss {train_loss}          ', end='\r') # '\r' to overwrite the same line
 
             # load batch data
             start_idx = batch_idx * parameters['batch_size']
@@ -154,7 +154,7 @@ def train_model(parameters):
         # validation does not require gradient calculations since we are not updating model weights.
             # for each batch in validation data
             for batch_idx in range(n_validation_batches):
-                print(f'  Validation batch {batch_idx+1}/{n_validation_batches}          ', end='\r') # '\r' to overwrite the same line
+                print(f'  Validation batch {batch_idx+1}/{n_validation_batches}. Accumulative validation loss {val_loss}         ', end='\r') # '\r' to overwrite the same line
 
                 # load batch data
                 start_idx = batch_idx * parameters['batch_size']
