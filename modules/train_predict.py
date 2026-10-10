@@ -18,6 +18,27 @@ import numpy as np
 import time
 from . import utility
 
+def _print_cuda_memory(label, device, show_peak=False):
+    if device.type != 'cuda':
+        return
+
+    torch.cuda.synchronize(device)
+    allocated_gib = torch.cuda.memory_allocated(device) / 1024**3
+    reserved_gib = torch.cuda.memory_reserved(device) / 1024**3
+    cuda_device_index = device.index if device.index is not None else torch.cuda.current_device()
+    free_bytes, total_bytes = torch.cuda.mem_get_info(cuda_device_index)
+    message = (
+        f'  GPU memory {label}: '
+        f'PyTorch allocated {allocated_gib:.2f} GiB, '
+        f'reserved {reserved_gib:.2f} GiB, '
+        f'driver free {free_bytes / 1024**3:.2f}/{total_bytes / 1024**3:.2f} GiB'
+    )
+    if show_peak:
+        peak_gib = torch.cuda.max_memory_allocated(device) / 1024**3
+        message += f', peak allocated {peak_gib:.2f} GiB'
+    print(f'\n{message}')
+
+
 def mse_loss(predictions, targets):
     # extract features from sparse tensors
     pred_features = predictions.F
@@ -52,6 +73,7 @@ def train_model(parameters):
     epochs_without_improvement = 0
     train_loss_history = []
     val_loss_history = []
+    memory_reported = False
     
     # create loss history file with header
     loss_file = open(parameters['result_folder'] / 'loss_history.txt', 'w')
@@ -80,7 +102,14 @@ def train_model(parameters):
             start_idx = batch_idx * parameters['batch_size']
             end_idx = min((batch_idx + 1) * parameters['batch_size'], n_train_samples)
 
+            device = parameters['device']
+            if not memory_reported and device.type == 'cuda':
+                torch.cuda.reset_peak_memory_stats(device)
+
             neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_train, name_prefixes, parameters, data_type='simulation', train_predict_type='train') # when train_predict_type='train', target_sparse will have values for all voxels, this is what we want during training: input only the subset of voxels as electrodes, but utilize all voxels' activation times as the target
+
+            if not memory_reported:
+                _print_cuda_memory('after first batch is loaded', device)
 
             # set gradients to zero
             optimizer.zero_grad() 
@@ -97,6 +126,10 @@ def train_model(parameters):
             
             # update model parameters using Adam optimizer
             optimizer.step()
+
+            if not memory_reported:
+                _print_cuda_memory('after first training step', device, show_peak=True)
+                memory_reported = True
             
             # accumulate training loss
             train_loss += loss.item()
