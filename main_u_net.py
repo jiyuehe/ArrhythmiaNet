@@ -43,8 +43,8 @@ parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * param
 # training parameters
 parameters['batch_size'] = 10 # number of training samples (electrograms-activation_maps pairs of 1 simulation on 1 geometry) processed together in one pass during training
 parameters['learning_rate'] = 1e-4 # too small or too big are both bad
-parameters['epochs'] = 100 # maximum epochs (training may stop earlier with early stopping)
-parameters['early_stopping_patience'] = 10 # stop training if no improvement for this many epochs
+parameters['epochs'] = 30 # maximum epochs (training may stop earlier with early stopping)
+parameters['early_stopping_patience'] = 5 # stop training if no improvement for this many epochs
 
 parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results')
 parameters['data_folder_patient'] = Path('/home/j/Documents/box/carto3_files/data_npz')
