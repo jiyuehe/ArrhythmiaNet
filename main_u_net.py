@@ -30,7 +30,7 @@ import numpy as np
 
 #%%
 # mode settings
-train_predict_flag = 1 # 1: only do training; 0: only do prediction
+train_predict_flag = 0 # 1: only do training; 0: only do prediction
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
 
 # time samples
@@ -108,8 +108,8 @@ if train_predict_flag == 0:
 
    if testing_data_flag == 0: # 0: simulation data; 1: clinical data
       # uniformly sample N files
-      N = 3
       file_names_test = np.array(parameters['file_names_test'])
+      N = len(file_names_test)
       if len(file_names_test) > N:
          indices = np.linspace(0, len(file_names_test) - 1, N, dtype=int)
          file_names_test = file_names_test[indices]
@@ -127,6 +127,8 @@ if train_predict_flag == 0:
    # convert all elements to numpy arrays if they are tensors
    predicted_data = [x.numpy() if hasattr(x, 'numpy') else x for x in predicted_data]
    truth_data = [x.numpy() if hasattr(x, 'numpy') else x for x in truth_data]
+
+   print('prediction done')
 
    # plot the predicted and true activation time maps
    if testing_data_flag == 0: # 0: simulation data; 1: clinical data

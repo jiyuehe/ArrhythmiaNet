@@ -21,6 +21,7 @@ script_dir = Path(script_dir)
 # add the workspace root to Python path
 from platform import node
 import modules.common as common
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 import matplotlib.pyplot as plt 
 import numpy as np
@@ -91,7 +92,8 @@ def plot_truth_and_predicted_activation_time_map(truth_data, predicted_data, fil
             name_prefix = file_names_test[sample_id].split('_clinical_data')[0]
 
         mesh_data = np.load(parameters['data_folder_patient'] / f'{name_prefix}_mesh.npz', allow_pickle=True)
-        node = mesh_data['voxel3mm_1mm_spacing']
+        # node = mesh_data['voxel3mm_1mm_spacing']
+        node = mesh_data['voxel']
 
         node = node - np.round(node.mean(axis=0)).astype(int) # shape (n_nodes, 3)
         n_nodes = node.shape[0]
@@ -120,61 +122,89 @@ def plot_truth_and_predicted_activation_time_map(truth_data, predicted_data, fil
         # compute error
         error_mae = np.nanmean(np.abs(data_predicted - data_truth)) # mean absolute error on normalized activation time
 
-        # plot true activation time map
-        data_min = np.nanmin(data_truth)
-        data_max = np.nanmax(data_truth)
-        data_threshold = data_min-0.1
-        # converted_color = common.convert_value_to_red_blue(data_truth, data_min, data_max, data_threshold)
-        converted_color = common.convert_value_to_red_magenta(data_truth, data_min, data_max, data_threshold)
+        # plot truth map
+        voxel_id_of_vertex1mm = mesh_data['voxel_id_of_vertex1mm']
+        face = mesh_data['face1mm']
+        vertex = mesh_data['vertex1mm']
 
-        # only color and show voxels with non-NaN data_truth
-        valid_mask = ~np.isnan(data_truth)
+        value_vertex = data_truth[voxel_id_of_vertex1mm]
+        data = np.asarray(value_vertex, dtype=float)
+        data_min = np.nanmin(data)
+        data_max = np.nanmax(data)
+        data_threshold = data_min - 0.1
 
-        fig = plt.figure(figsize=(8, 6), dpi=100)
+        vertex_color = common.convert_value_to_red_magenta(
+            data, data_min, data_max, data_threshold
+        )
+        face_color = np.nanmean(vertex_color[face[:, :3]], axis=1)
+
+        plt.figure()
         ax = plt.axes(projection='3d')
-
-        if plot_scatter_voxel_flag == 1:
-            # Only plot non-NaN nodes
-            ax.scatter(node[e_id[valid_mask]], node[e_id[valid_mask], 1], node[e_id[valid_mask], 2], c=converted_color[e_id[valid_mask], :], alpha=1.0, edgecolor='none', linewidth=0, marker='s', s=10, depthshade=True)
-        else:
-            # For voxel plot, set RGBA for all voxels, alpha=1 for valid, alpha=0.1 for NaN
-            voxel_color = np.zeros((*voxels.shape, 4))  # RGBA
-            # Set RGB for valid voxels
-            voxel_color[grid_indices[valid_mask,0], grid_indices[valid_mask,1], grid_indices[valid_mask,2], :3] = converted_color[valid_mask]
-            # Set alpha for valid voxels
-            voxel_color[grid_indices[valid_mask,0], grid_indices[valid_mask,1], grid_indices[valid_mask,2], 3] = 1.0
-            # Set alpha for NaN voxels (invalid_mask)
-            invalid_mask = ~valid_mask
-            if np.any(invalid_mask):
-                # Optionally set color for NaN voxels (e.g., gray or leave as zero)
-                voxel_color[grid_indices[invalid_mask,0], grid_indices[invalid_mask,1], grid_indices[invalid_mask,2], 3] = 0.05
-            ax.voxels(voxels, facecolors=voxel_color, edgecolor=None, shade=False)
-        common.set_axes_equal(ax)
-        ax.view_init(elev=70, azim=-70)
+        mesh = Poly3DCollection(
+            vertex[face],
+            facecolors=face_color,
+            edgecolors='gray',
+            linewidths=0.1,
+            alpha=1,
+        )
+        ax.add_collection3d(mesh)
+        ax.auto_scale_xyz(vertex[:, 0], vertex[:, 1], vertex[:, 2])
         plt.axis('off')
+
+        ax.view_init(elev=70, azim=-70)
+
+        common.set_axes_equal(ax)
         plt.tight_layout()
 
         image_file_name = parameters['result_folder'] / f'{file_names_test[sample_id][:-4]}_map_truth.png'
-        plt.savefig(image_file_name, dpi=100, bbox_inches="tight", pad_inches=0)
+        plt.savefig(image_file_name, dpi=300, bbox_inches="tight", pad_inches=0)
         plt.close()
         common.crop_image(image_file_name)
 
-        # plot predicted activation time map
-        data_min = np.nanmin(data_predicted)
-        data_max = np.nanmax(data_predicted)
-        data_threshold = data_min-0.1
-        # converted_color = common.convert_value_to_red_blue(data_predicted, data_min, data_max, data_threshold)
-        converted_color = common.convert_value_to_red_magenta(data_predicted, data_min, data_max, data_threshold)
+        # plot predicted map
+        value_vertex = data_predicted[voxel_id_of_vertex1mm]
+        data = np.asarray(value_vertex, dtype=float)
+        data_min = np.nanmin(data)
+        data_max = np.nanmax(data)
+        data_threshold = data_min - 0.1
 
-        fig = plt.figure(figsize=(8, 6), dpi=100)
+        vertex_color = common.convert_value_to_red_magenta(
+            data, data_min, data_max, data_threshold
+        )
+        face_color = np.nanmean(vertex_color[face[:, :3]], axis=1)
+
+        plt.figure()
         ax = plt.axes(projection='3d')
-        scatter_or_voxel_plot(plot_scatter_voxel_flag, sparse_electrode_flag, node, e_id, non_e_id, voxels, grid_indices, converted_color, fig, ax)
-        common.set_axes_equal(ax)
-        ax.view_init(elev=70, azim=-70)
+
+        # triangular mesh plot
+        mesh = Poly3DCollection(
+            vertex[face],
+            facecolors=face_color,
+            edgecolors='gray',
+            linewidths=0.1,
+            alpha=1,
+        )
+        ax.add_collection3d(mesh)
+        ax.auto_scale_xyz(vertex[:, 0], vertex[:, 1], vertex[:, 2])
+
+        # # scatter plot
+        # ax.scatter(
+        #     vertex[:, 0],
+        #     vertex[:, 1],
+        #     vertex[:, 2],
+        #     c=vertex_color,
+        #     s=2,
+        #     linewidths=0
+        # )
+
         plt.axis('off')
+
+        ax.view_init(elev=70, azim=-70)
+
+        common.set_axes_equal(ax)
         plt.tight_layout()
 
         image_file_name = parameters['result_folder'] / f'{file_names_test[sample_id][:-4]}_map_predict_MAE_{error_mae:.4f}.png'
-        plt.savefig(image_file_name, dpi=100, bbox_inches="tight", pad_inches=0)
+        plt.savefig(image_file_name, dpi=300, bbox_inches="tight", pad_inches=0)
         plt.close()
         common.crop_image(image_file_name)

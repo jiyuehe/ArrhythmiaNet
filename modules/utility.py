@@ -130,7 +130,8 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
     for i in range(start_idx, end_idx):
         # load electrode coordinates
         # ------------------------------
-        mesh_file_name = name_prefixes[i] + '_mesh.npz'
+        batch_index = i - start_idx
+        mesh_file_name = name_prefixes[batch_index] + '_mesh.npz'
         mesh_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / mesh_file_name, allow_pickle=True)
 
         # voxel3mm_1mm_spacing = mesh_data['voxel3mm_1mm_spacing']
@@ -166,7 +167,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
             x[:,mesh_data['voxel_id_of_simulation_electrode']] = x_electrode
         elif data_type == 'clinical':
             # load data
-            clinical_data_file_name = name_prefixes[i] + '_catheter.npz'
+            clinical_data_file_name = name_prefixes[batch_index] + '_catheter.npz'
             map_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / clinical_data_file_name, allow_pickle=True)
 
             # find the good electrode nodes that have good signals
