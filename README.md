@@ -85,5 +85,6 @@ The minkowski engine docker container is Ubuntu 18.
 3D data dimensions (t, depth, height, width).  
 
 If docker is running, command line to kill all docker containers:  
+```bash
 docker stop $(docker ps -q)  
-
+```
