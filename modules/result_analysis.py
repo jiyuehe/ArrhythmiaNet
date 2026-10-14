@@ -26,6 +26,36 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt 
 import numpy as np
 
+
+def save_interactive_mesh(vertex, face, face_color, html_file_name):
+    """Save a rotatable, self-contained HTML view of a triangular mesh."""
+    import plotly.graph_objects as go
+
+    triangles = face[:, :3]
+    rgb = np.rint(np.clip(face_color, 0, 1) * 255).astype(np.uint8)
+    colors = [f'rgb({r},{g},{b})' for r, g, b in rgb]
+
+    fig = go.Figure(go.Mesh3d(
+        x=vertex[:, 0], y=vertex[:, 1], z=vertex[:, 2],
+        i=triangles[:, 0], j=triangles[:, 1], k=triangles[:, 2],
+        facecolor=colors,
+        flatshading=True,
+        lighting=dict(ambient=1, diffuse=0, specular=0),
+        hoverinfo='skip',
+    ))
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            zaxis=dict(visible=False),
+            aspectmode='data',
+            camera=dict(eye=dict(x=0.25, y=-0.7, z=2)),
+            dragmode='orbit',
+        ),
+        margin=dict(l=0, r=0, b=0, t=0),
+    )
+    fig.write_html(html_file_name, include_plotlyjs=True, full_html=True)
+
 def plot_loss_history(result_folder):
     loss_history_path = result_folder / 'loss_history.txt'
     train_loss_history = []
@@ -155,6 +185,7 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
         plt.savefig(image_file_name, dpi=300, bbox_inches="tight", pad_inches=0)
         plt.close()
         common.crop_image(image_file_name)
+        save_interactive_mesh(vertex, face, face_color, image_file_name.with_suffix('.html'))
 
         # plot predicted map
         value_vertex = data_predicted[voxel_id_of_vertex1mm]
@@ -203,3 +234,4 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
         plt.savefig(image_file_name, dpi=300, bbox_inches="tight", pad_inches=0)
         plt.close()
         common.crop_image(image_file_name)
+        save_interactive_mesh(vertex, face, face_color, image_file_name.with_suffix('.html'))

@@ -68,15 +68,16 @@ docker run --gpus all -it \
 ```bash
 apt update
 pip install matplotlib
+pip install plotly
 apt install -y graphviz
 pip install graphviz
 ```
 
 Save the installed libraries in the Docker container. Run this outside the container (in another terminal).  
 ```bash
-docker commit d6da8c95d86f my_minkowski_image
+docker commit 096094a35cf1 my_minkowski_image
 ```
-"d6da8c95d86f" is from the terminal "root@d6da8c95d86f:/workspace#" and it's different each time.  
+"096094a35cf1" is from the terminal "root@096094a35cf1:/workspace#" and it's different each time.  
 
 Misc notes  
 ==============================  

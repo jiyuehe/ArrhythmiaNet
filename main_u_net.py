@@ -109,7 +109,7 @@ if train_predict_flag == 0:
    if testing_data_flag == 0: # 0: simulation data; 1: clinical data
       # uniformly sample N files
       file_names_test = np.array(parameters['file_names_test'])
-      N = len(file_names_test)
+      N = 2 #len(file_names_test)
       if len(file_names_test) > N:
          indices = np.linspace(0, len(file_names_test) - 1, N, dtype=int)
          file_names_test = file_names_test[indices]
