@@ -33,13 +33,15 @@ exit
 
 Install Minkowski Engine Docker  
 ==============================  
-[Install standard Docker Engine in Ubuntu]  
+Install standard Docker Engine in Ubuntu  
+```bash
 sudo apt update  
 sudo apt install -y docker.io  
 sudo systemctl enable docker --now  
 sudo usermod -aG docker $USER  
 
 Restart Ubuntu  
+```
 
 [Install NVIDIA Container Toolkit]  
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
