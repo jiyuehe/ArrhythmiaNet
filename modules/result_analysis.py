@@ -130,9 +130,7 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
         data_max = np.nanmax(data)
         data_threshold = data_min - 0.1
 
-        vertex_color = common.convert_value_to_red_magenta(
-            data, data_min, data_max, data_threshold
-        )
+        vertex_color = common.convert_value_to_red_magenta(data, data_min, data_max, data_threshold)
         face_color = np.nanmean(vertex_color[face[:, :3]], axis=1)
 
         plt.figure()
