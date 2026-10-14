@@ -27,7 +27,7 @@ sudo usermod -aG docker $USER
 
 Restart Ubuntu  
 
-[Install NVIDIA Container Toolkit]
+[Install NVIDIA Container Toolkit]  
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
 curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
@@ -35,10 +35,10 @@ sudo apt update
 sudo apt install -y nvidia-docker2
 sudo systemctl restart docker
 
-[Install Minkowski Engine]
+[Install Minkowski Engine]  
 docker pull chrischoy/minkowski_engine:latest
 
-[Run the Docker container (and install Python libraries as needed)]
+[Run the Docker container (and install Python libraries as needed)]  
 docker run --gpus all -it \
     -v /home/j/Desktop/ssd/git/heart_project:/workspace \
     -v /home/j/Desktop/hdd:/data \
@@ -51,7 +51,7 @@ apt update
 apt install -y graphviz
 pip install graphviz
 
-[Save the installed libraries in the Docker container]
+[Save the installed libraries in the Docker container]  
 Run this outside the container (in another terminal):
 docker commit d6da8c95d86f my_minkowski_image
 d6da8c95d86f is from the root@d6da8c95d86f:/workspace#
