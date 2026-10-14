@@ -1,11 +1,18 @@
 tmux  
 ==============================  
 It manages multiple terminal sessions and keeps them running after SSH disconnects.  
-To start it: tmux 
-To view it: tmux attach -t 0  
+To start it: 
+```bash
+tmux 
+```
+To view it: 
+```bash
+tmux attach -t 0  
+```
 
 To run the U-Net  
 ==============================  
+Run Docker
 ```bash
 docker run --gpus all -it \
     -v /home/j/Desktop/ssd/git:/workspace \
@@ -14,6 +21,7 @@ docker run --gpus all -it \
     -p 8888:8888 \
     my_minkowski_image:latest /bin/bash
 ```
+Run codes
 ```bash
 python3 ArrhythmiaNet/main_u_net.py
 ```
