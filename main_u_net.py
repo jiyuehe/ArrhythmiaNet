@@ -132,9 +132,9 @@ if train_predict_flag == 0:
 
    # plot the predicted and true activation time maps
    if testing_data_flag == 0: # 0: simulation data; 1: clinical data
-      modules.result_analysis.plot_truth_and_predicted_activation_time_map(truth_data, predicted_data, file_names_test, parameters, data_type='simulation')
+      modules.result_analysis.plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, data_type='simulation')
    elif testing_data_flag == 1:
-      modules.result_analysis.plot_truth_and_predicted_activation_time_map(truth_data, predicted_data, file_names_test, parameters, data_type='clinical')
+      modules.result_analysis.plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, data_type='clinical')
 
 print('done')
 

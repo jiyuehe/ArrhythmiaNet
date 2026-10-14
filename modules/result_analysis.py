@@ -76,7 +76,7 @@ def scatter_or_voxel_plot(plot_scatter_voxel_flag, sparse_electrode_flag, node, 
         voxel_color[grid_indices[:,0], grid_indices[:,1], grid_indices[:,2]] = converted_color
         ax.voxels(voxels, facecolors=voxel_color, edgecolor=None, shade=False)
 
-def plot_truth_and_predicted_activation_time_map(truth_data, predicted_data, file_names_test, parameters, data_type):
+def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, data_type):
     plot_scatter_voxel_flag = 0 # 0: voxel plot; 1: scatter plot
     sparse_electrode_flag = 0 # color on all nodes
 
