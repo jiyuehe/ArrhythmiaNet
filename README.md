@@ -2,20 +2,26 @@ tmux
 ==============================  
 It manages multiple terminal sessions and keeps them running after SSH disconnects.  
 To start it: tmux 
-To view it: tmux attach -t 0
+To view it: tmux attach -t 0  
 
 To run the U-Net  
 ==============================  
+```bash
 docker run --gpus all -it \
     -v /home/j/Desktop/ssd/git:/workspace \
     -v /home/j/Desktop/hdd/share_folder:/home/j/Desktop/hdd/share_folder \
     -v /home/j/Documents/box/carto3_files/data_npz:/home/j/Documents/box/carto3_files/data_npz \
     -p 8888:8888 \
     my_minkowski_image:latest /bin/bash
-
+```
+```bash
 python3 ArrhythmiaNet/main_u_net.py
+```
 
-To exit docker, command line: exit
+To exit docker, command line
+```bash
+exit
+```
 
 Install Minkowski Engine Docker  
 ==============================  
