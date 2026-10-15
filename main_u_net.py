@@ -72,7 +72,8 @@ try:
    parameters['model'] = modules.unet_minkowski.MinkowskiUNet(in_channels=parameters['n_timepoints']+1, out_channels=1,D=3).to(parameters['device']) 
    # D is the dimension of the input data
    # in_channels is n_timepoints channels for the electrogram, plus 1 channel as an indicator for electrode nodes (1 for electrode nodes, 0 for non-electrode nodes)
-   # out_channels is 1 for the predicted activation time map
+   # out_channels is 1 for prediction activation time map
+   # out_channels is 3 for prediction of phase map: sin(phase), cos(phase), a mask for scar
 except ImportError:
    print('MinkowskiEngine is not installed.')
 
