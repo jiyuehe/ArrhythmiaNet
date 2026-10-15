@@ -12,24 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 import os
 from pathlib import Path
 script_dir = os.path.dirname(os.path.abspath(__file__)) # get the path of the current script
 os.chdir(script_dir) # change the working directory
 script_dir = Path(script_dir)
 
-# add the workspace root to Python path
 from platform import node
 import modules.common as common
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 import matplotlib.pyplot as plt 
 import numpy as np
+import plotly.graph_objects as go
 
-
-def save_interactive_mesh(vertex, face, face_color, html_file_name):
-    """Save a rotatable, self-contained HTML view of a triangular mesh."""
-    import plotly.graph_objects as go
+def save_interactive_mesh(vertex, face, face_color, image_file_name, elev=70, azim=-70):
+    elev = math.radians(elev)
+    azim = math.radians(azim)
+    camera_distance = 2
 
     triangles = face[:, :3]
     rgb = np.rint(np.clip(face_color, 0, 1) * 255).astype(np.uint8)
@@ -49,12 +49,17 @@ def save_interactive_mesh(vertex, face, face_color, html_file_name):
             yaxis=dict(visible=False),
             zaxis=dict(visible=False),
             aspectmode='data',
-            camera=dict(eye=dict(x=0.25, y=-0.7, z=2)),
+            camera=dict(eye=dict(
+                x=camera_distance * math.cos(elev) * math.cos(azim),
+                y=camera_distance * math.cos(elev) * math.sin(azim),
+                z=camera_distance * math.sin(elev),
+            )),
             dragmode='orbit',
         ),
         margin=dict(l=0, r=0, b=0, t=0),
     )
-    fig.write_html(html_file_name, include_plotlyjs=True, full_html=True)
+    fig.write_html(image_file_name.with_suffix('.html'), include_plotlyjs=True, full_html=True)
+    fig.write_image(image_file_name, width=1600, height=1600)
 
 def plot_loss_history(result_folder):
     loss_history_path = result_folder / 'loss_history.txt'
@@ -163,29 +168,8 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
         vertex_color = common.convert_value_to_red_magenta(data, data_min, data_max, data_threshold)
         face_color = np.nanmean(vertex_color[face[:, :3]], axis=1)
 
-        plt.figure()
-        ax = plt.axes(projection='3d')
-        mesh = Poly3DCollection(
-            vertex[face],
-            facecolors=face_color,
-            edgecolors='gray',
-            linewidths=0.1,
-            alpha=1,
-        )
-        ax.add_collection3d(mesh)
-        ax.auto_scale_xyz(vertex[:, 0], vertex[:, 1], vertex[:, 2])
-        plt.axis('off')
-
-        ax.view_init(elev=70, azim=-70)
-
-        common.set_axes_equal(ax)
-        plt.tight_layout()
-
         image_file_name = parameters['result_folder'] / f'{file_names_test[sample_id][:-4]}_map_truth.png'
-        plt.savefig(image_file_name, dpi=300, bbox_inches="tight", pad_inches=0)
-        plt.close()
-        common.crop_image(image_file_name)
-        save_interactive_mesh(vertex, face, face_color, image_file_name.with_suffix('.html'))
+        save_interactive_mesh(vertex, face, face_color, image_file_name)
 
         # plot predicted map
         value_vertex = data_predicted[voxel_id_of_vertex1mm]
@@ -199,39 +183,5 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
         )
         face_color = np.nanmean(vertex_color[face[:, :3]], axis=1)
 
-        plt.figure()
-        ax = plt.axes(projection='3d')
-
-        # triangular mesh plot
-        mesh = Poly3DCollection(
-            vertex[face],
-            facecolors=face_color,
-            edgecolors='gray',
-            linewidths=0.1,
-            alpha=1,
-        )
-        ax.add_collection3d(mesh)
-        ax.auto_scale_xyz(vertex[:, 0], vertex[:, 1], vertex[:, 2])
-
-        # # scatter plot
-        # ax.scatter(
-        #     vertex[:, 0],
-        #     vertex[:, 1],
-        #     vertex[:, 2],
-        #     c=vertex_color,
-        #     s=2,
-        #     linewidths=0
-        # )
-
-        plt.axis('off')
-
-        ax.view_init(elev=70, azim=-70)
-
-        common.set_axes_equal(ax)
-        plt.tight_layout()
-
         image_file_name = parameters['result_folder'] / f'{file_names_test[sample_id][:-4]}_map_predict_MAE_{error_mae:.4f}.png'
-        plt.savefig(image_file_name, dpi=300, bbox_inches="tight", pad_inches=0)
-        plt.close()
-        common.crop_image(image_file_name)
-        save_interactive_mesh(vertex, face, face_color, image_file_name.with_suffix('.html'))
+        save_interactive_mesh(vertex, face, face_color, image_file_name)

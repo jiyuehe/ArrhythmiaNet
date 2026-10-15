@@ -15,11 +15,11 @@ To run the U-Net
 Run Docker
 ```bash
 docker run --gpus all -it \
-    -v /home/j/Desktop/ssd/git:/workspace \
-    -v /home/j/Desktop/hdd/share_folder:/home/j/Desktop/hdd/share_folder \
-    -v /home/j/Documents/box/carto3_files/data_npz:/home/j/Documents/box/carto3_files/data_npz \
-    -p 8888:8888 \
-    my_minkowski_image:latest /bin/bash
+-v /home/j/Desktop/ssd/git:/workspace \
+-v /home/j/Desktop/hdd/share_folder:/home/j/Desktop/hdd/share_folder \
+-v /home/j/Documents/box/carto3_files/data_npz:/home/j/Documents/box/carto3_files/data_npz \
+-p 8888:8888 \
+my_minkowski_image:latest /bin/bash
 ```
 Run codes
 ```bash
@@ -60,24 +60,27 @@ docker pull chrischoy/minkowski_engine:latest
 Run the Docker container (and install Python libraries as needed)  
 ```bash
 docker run --gpus all -it \
-    -v /home/j/Desktop/ssd/git/heart_project:/workspace \
-    -v /home/j/Desktop/hdd:/data \
-    -p 8888:8888 \
-    chrischoy/minkowski_engine:latest /bin/bash
+-v /home/j/Desktop/ssd/git:/workspace \
+-v /home/j/Desktop/hdd/share_folder:/home/j/Desktop/hdd/share_folder \
+-v /home/j/Documents/box/carto3_files/data_npz:/home/j/Documents/box/carto3_files/data_npz \
+-p 8888:8888 \
+chrischoy/minkowski_engine:latest /bin/bash
 ```
 ```bash
 apt update
 pip install matplotlib
 pip install plotly
+pip install kaleido
 apt install -y graphviz
 pip install graphviz
 ```
+Plotly's PNG export also needs Chrome or Chromium. If neither is installed, run `plotly_get_chrome`.
 
 Save the installed libraries in the Docker container. Run this outside the container (in another terminal).  
 ```bash
-docker commit 096094a35cf1 my_minkowski_image
+docker commit ddd3c8037e80 my_minkowski_image
 ```
-"096094a35cf1" is from the terminal "root@096094a35cf1:/workspace#" and it's different each time.  
+"ddd3c8037e80" is from the terminal "root@ddd3c8037e80:/workspace#" and it's different each time.  
 
 Misc notes  
 ==============================  
