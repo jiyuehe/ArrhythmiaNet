@@ -15,17 +15,20 @@
 
 import math
 import os
+import sys
 from pathlib import Path
 script_dir = os.path.dirname(os.path.abspath(__file__)) # get the path of the current script
 os.chdir(script_dir) # change the working directory
 script_dir = Path(script_dir)
 
 from platform import node
-import modules.common as common
-
 import matplotlib.pyplot as plt 
 import numpy as np
 import plotly.graph_objects as go
+
+COMMON_DIR = Path('/home/j/Documents/box/codes/common')
+sys.path.insert(0, str(COMMON_DIR))
+import common
 
 def save_interactive_mesh(vertex, face, face_color, image_file_name, elev=70, azim=-70):
     elev = math.radians(elev)

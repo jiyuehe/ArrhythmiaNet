@@ -1,5 +1,6 @@
 {
     "python.defaultInterpreterPath": "/home/j/Desktop/ssd/myenv/bin/python3",
     // "python.defaultInterpreterPath": "./venv/bin/python", 
-    "python.terminal.activateEnvironment": true
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.extraPaths": ["/home/j/Documents/box/codes/common"], // add the parent folder in the file system, so it will recognize the common/common.py file
 }

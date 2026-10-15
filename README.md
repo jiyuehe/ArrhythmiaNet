@@ -18,6 +18,7 @@ docker run --gpus all -it \
 -v /home/j/Desktop/ssd/git:/workspace \
 -v /home/j/Desktop/hdd/share_folder:/home/j/Desktop/hdd/share_folder \
 -v /home/j/Documents/box/carto3_files/data_npz:/home/j/Documents/box/carto3_files/data_npz \
+-v /home/j/Documents/box/codes/common:/home/j/Documents/box/codes/common \
 -p 8888:8888 \
 my_minkowski_image:latest /bin/bash
 ```
