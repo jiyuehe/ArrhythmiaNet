@@ -17,7 +17,7 @@ Run Docker
 docker run --gpus all -it \
 -v /home/j/Desktop/ssd/git:/workspace \
 -v /home/j/Desktop/hdd/share_folder:/home/j/Desktop/hdd/share_folder \
--v /home/j/Documents/box/carto3_files/data_npz:/home/j/Documents/box/carto3_files/data_npz \
+-v /home/j/Desktop/ssd/carto3_data/processed:/home/j/Desktop/ssd/carto3_data/processed \
 -v /home/j/Documents/box/codes/common:/home/j/Documents/box/codes/common \
 -p 8888:8888 \
 my_minkowski_image:latest /bin/bash
@@ -74,14 +74,16 @@ pip install plotly
 pip install kaleido
 apt install -y graphviz
 pip install graphviz
+pip install pandas
 ```
 Plotly's PNG export also needs Chrome or Chromium. If neither is installed, run `plotly_get_chrome`.
 
-Save the installed libraries in the Docker container. Run this outside the container (in another terminal).  
+Save the installed libraries in the Docker container.  
+NOTE: Run this outside the container (in another terminal).  
 ```bash
-docker commit ddd3c8037e80 my_minkowski_image
+docker commit de73b12de16d my_minkowski_image
 ```
-"ddd3c8037e80" is from the terminal "root@ddd3c8037e80:/workspace#" and it's different each time.  
+"de73b12de16d" is from the terminal "root@de73b12de16d:/workspace#" and it's different each time.  
 
 Misc notes  
 ==============================  
@@ -89,7 +91,7 @@ The minkowski engine docker container is Ubuntu 18.
 
 3D data dimensions (t, depth, height, width).  
 
-If docker is running, command line to kill all docker containers:  
+If docker is running, open a new Terminal, command line to kill all docker containers:  
 ```bash
 docker stop $(docker ps -q)  
 ```

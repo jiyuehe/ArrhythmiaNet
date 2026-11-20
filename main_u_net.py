@@ -31,14 +31,14 @@ import numpy as np
 
 #%%
 # mode settings
-train_predict_flag = 0 # 1: only do training; 0: only do prediction
+train_predict_flag = 1 # 1: only do training; 0: only do prediction
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
 
 # time samples
 parameters = {}
-parameters['t_start'] = 500 - 150
+parameters['t_start'] = 0
 parameters['time_step'] = 1
-parameters['n_timepoints'] = 500 + 150
+parameters['n_timepoints'] = 499
 parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
 
 # training parameters
@@ -47,8 +47,9 @@ parameters['learning_rate'] = 1e-4 # too small or too big are both bad
 parameters['epochs'] = 30 # maximum epochs (training may stop earlier with early stopping)
 parameters['early_stopping_patience'] = 5 # stop training if no improvement for this many epochs
 
-parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results')
-parameters['data_folder_patient'] = Path('/home/j/Documents/box/carto3_files/data_npz')
+parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/one_focal')
+# parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/flutter')
+parameters['data_folder_patient'] = Path('/home/j/Desktop/ssd/carto3_data/processed')
 parameters['result_folder'] = script_dir / 'result'
 parameters['result_folder'].mkdir(exist_ok=True)
 
