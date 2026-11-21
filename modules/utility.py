@@ -160,12 +160,11 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
             bad_electrode_ratio = 0
             n_bad_electrode = int(bad_electrode_ratio * n_electrodes)
             non_e_id = np.random.choice(n_electrodes, n_bad_electrode, replace=False)
-
             x_electrode[:, non_e_id] = 0 # set electrograms of bad electrode nodes to 0. the bad electrode nodes are randomly selected
 
             # electrograms on each nodes
             x = np.zeros((x_electrode.shape[0], n_nodes))
-            x[:,simulation_results['voxel_id_of_simulation_electrode']] = x_electrode
+            x[:,simulation_results['electrode_id_on_1mm_mesh']] = x_electrode
         elif data_type == 'clinical':
             # load data
             clinical_data_file_name = name_prefixes[batch_index] + '_catheter.npz'
