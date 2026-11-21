@@ -135,10 +135,10 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         mesh_file_name = name_prefixes[batch_index] + '_mesh.npz'
         mesh_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / mesh_file_name, allow_pickle=True)
 
-        # voxel3mm_1mm_spacing = mesh_data['voxel3mm_1mm_spacing']
-        # node = voxel3mm_1mm_spacing - np.round(voxel3mm_1mm_spacing.mean(axis=0)).astype(int) # center the coordinates at the origin and convert to integers. shape (n_nodes, 3)
-        voxel = mesh_data['voxel']
-        node = voxel - np.round(voxel.mean(axis=0)).astype(int) # center the coordinates at the origin and convert to integers. shape (n_nodes, 3)
+        # voxel = mesh_data['voxel']
+        # node = voxel - np.round(voxel.mean(axis=0)).astype(int) # center the coordinates at the origin and convert to integers. shape (n_nodes, 3)
+        vertex1mm = mesh_data['vertex1mm']
+        node = vertex1mm - np.round(vertex1mm.mean(axis=0)).astype(int) # center the coordinates at the origin and convert to integers. shape (n_nodes, 3)
         n_nodes = node.shape[0]
 
         b = i - start_idx # batch index, 1 batch corresponds to 1 simulation on 1 geometry
@@ -157,7 +157,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
 
             # randomly make some electrodes bad
             n_electrodes = x_electrode.shape[1]
-            bad_electrode_ratio = 0.1
+            bad_electrode_ratio = 0
             n_bad_electrode = int(bad_electrode_ratio * n_electrodes)
             non_e_id = np.random.choice(n_electrodes, n_bad_electrode, replace=False)
 
@@ -165,7 +165,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
 
             # electrograms on each nodes
             x = np.zeros((x_electrode.shape[0], n_nodes))
-            x[:,mesh_data['voxel_id_of_simulation_electrode']] = x_electrode
+            x[:,simulation_results['voxel_id_of_simulation_electrode']] = x_electrode
         elif data_type == 'clinical':
             # load data
             clinical_data_file_name = name_prefixes[batch_index] + '_catheter.npz'
@@ -191,13 +191,11 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         # load target data
         # ------------------------------
         if data_type == 'simulation' and train_predict_type == 'train':
-            # y = simulation_results['lat_electrode'].astype(np.float32)
-            # y = simulation_results['phase_electrode'].astype(np.float32)
-            y = simulation_results['phase'].astype(np.float32)
+            y = simulation_results['lat_vertex1mm'].astype(np.float32)
+            # y = simulation_results['lat_vertex1mm_woi'].astype(np.float32)
         elif data_type == 'simulation' and train_predict_type == 'predict':
-            # y = simulation_results['lat_electrode'].astype(np.float32)
-            # y = simulation_results['phase_electrode'].astype(np.float32)
-            y = simulation_results['phase'].astype(np.float32)
+            y = simulation_results['lat_vertex1mm'].astype(np.float32)
+            # y = simulation_results['lat_vertex1mm_woi'].astype(np.float32)
             # y[non_e_id] = np.nan # set activation time of nodes without activation to nan
         elif data_type == 'clinical':
             y = np.full(n_nodes, np.nan, dtype=np.float32)
@@ -259,6 +257,9 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
     # build targets_batch: (batch * n_nodes, 1)
     targets_list = [torch.from_numpy(y).float().reshape(-1, 1) for y in y_temp]
     targets_batch = torch.cat(targets_list, dim=0).to(parameters['device'])
+
+    print(targets_batch.shape)
+    print(nodes_batch.shape)
 
     # create MinkowskiEngine sparse tensor
     neural_network_input = ME.SparseTensor(features=feats_batch, coordinates=nodes_batch, device=parameters['device'])
