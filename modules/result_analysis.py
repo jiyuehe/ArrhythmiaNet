@@ -99,22 +99,6 @@ def voxelize_nodes(node):
 
     return voxels, grid_indices
 
-def scatter_or_voxel_plot(plot_scatter_voxel_flag, sparse_electrode_flag, node, e_id, non_e_id, voxels, grid_indices, converted_color, fig, ax):
-    if plot_scatter_voxel_flag == 1:
-        dpi = fig.dpi
-        points_per_mm = dpi / 25.4
-        if sparse_electrode_flag == 0:
-            node_size = points_per_mm ** 2 * 2 * 2
-        elif sparse_electrode_flag == 1:
-            node_size = points_per_mm ** 2 * 2
-
-        ax.scatter(node[non_e_id, 0], node[non_e_id, 1], node[non_e_id, 2], c='grey', s=1, edgecolor='none', linewidth=0, alpha=0.3)
-        ax.scatter(node[e_id, 0], node[e_id, 1], node[e_id, 2], c=converted_color[e_id,:], edgecolor='none', linewidth=0, marker='s', s=node_size, depthshade=True)
-    elif plot_scatter_voxel_flag == 0:
-        voxel_color = np.zeros((*voxels.shape, 3))
-        voxel_color[grid_indices[:,0], grid_indices[:,1], grid_indices[:,2]] = converted_color
-        ax.voxels(voxels, facecolors=voxel_color, edgecolor=None, shade=False)
-
 def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, data_type):
     n_samples = len(predicted_data)
 
@@ -128,8 +112,7 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
             name_prefix = file_names_test[sample_id].split('_clinical_data')[0]
 
         mesh_data = np.load(parameters['data_folder_patient'] / f'{name_prefix}_mesh.npz', allow_pickle=True)
-        # node = mesh_data['voxel3mm_1mm_spacing']
-        node = mesh_data['voxel']
+        node = mesh_data['vertex1mm']
 
         node = node - np.round(node.mean(axis=0)).astype(int) # shape (n_nodes, 3)
         n_nodes = node.shape[0]
@@ -149,9 +132,6 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
             good_e_id = [i for i, x in enumerate(act) if x != 0]
             non_e_id = np.setdiff1d(np.arange(n_nodes), good_e_id)
 
-        e_id = np.arange(node.shape[0], dtype=np.int64)
-        voxels, grid_indices = voxelize_nodes(node)
-
         data_truth = truth_data[sample_id].flatten()
         data_predicted = predicted_data[sample_id].flatten()
 
@@ -159,11 +139,14 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
         error_mae = np.nanmean(np.abs(data_predicted - data_truth)) # mean absolute error on normalized activation time
 
         # plot truth map
-        voxel_id_of_vertex1mm = mesh_data['voxel_id_of_vertex1mm']
         face = mesh_data['face1mm']
         vertex = mesh_data['vertex1mm']
 
-        value_vertex = data_truth[voxel_id_of_vertex1mm]
+        print(f'### data_truth: {data_truth.shape}')
+        print(f'### data_predicted: {data_predicted.shape}')
+        print(f'### vertex: {vertex.shape}')
+
+        value_vertex = data_truth
         data = np.asarray(value_vertex, dtype=float)
         data_min = np.nanmin(data)
         data_max = np.nanmax(data)
@@ -176,7 +159,7 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
         save_interactive_mesh(vertex, face, face_color, image_file_name)
 
         # plot predicted map
-        value_vertex = data_predicted[voxel_id_of_vertex1mm]
+        value_vertex = data_predicted
         data = np.asarray(value_vertex, dtype=float)
         data_min = np.nanmin(data)
         data_max = np.nanmax(data)

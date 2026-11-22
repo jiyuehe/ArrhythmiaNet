@@ -97,7 +97,7 @@ def train_model(parameters):
         
         # for each batch in training data
         for batch_idx in range(n_train_batches):
-            print(f'  Training batch {batch_idx+1}/{n_train_batches}. Accumulative training loss {train_loss}          ', end='\r') # '\r' to overwrite the same line
+            print(f'  Training batch {batch_idx+1}/{n_train_batches}. Accumulative training loss {train_loss*1000:.4f}e-3', end='\r') # '\r' to overwrite the same line
 
             # load batch data
             start_idx = batch_idx * parameters['batch_size']
@@ -155,7 +155,7 @@ def train_model(parameters):
         # validation does not require gradient calculations since we are not updating model weights.
             # for each batch in validation data
             for batch_idx in range(n_validation_batches):
-                print(f'  Validation batch {batch_idx+1}/{n_validation_batches}. Accumulative validation loss {val_loss}         ', end='\r') # '\r' to overwrite the same line
+                print(f'  Validation batch {batch_idx+1}/{n_validation_batches}. Accumulative validation loss {val_loss*1000:.4f}e-3', end='\r') # '\r' to overwrite the same line
 
                 # load batch data
                 start_idx = batch_idx * parameters['batch_size']
@@ -203,7 +203,7 @@ def train_model(parameters):
 
         elif val_loss >= best_loss:
             epochs_without_improvement += 1
-            print(f"    no improvement for {epochs_without_improvement} epoch(s) (min val loss: {best_loss*1000:.4f}e-3)")
+            print(f"    no improvement for {epochs_without_improvement} epoch(s) (min val loss: {best_loss*1000:.4f}e-3).                  ")
             
             if epochs_without_improvement >= parameters['early_stopping_patience']:
                 print(f"early stopping triggered after {epoch+1} epochs")
