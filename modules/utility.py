@@ -131,8 +131,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
     for i in range(start_idx, end_idx):
         # load electrode coordinates
         # ------------------------------
-        batch_index = i - start_idx
-        mesh_file_name = name_prefixes[batch_index] + '_mesh.npz'
+        mesh_file_name = name_prefixes[i] + '_mesh.npz'
         mesh_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / mesh_file_name, allow_pickle=True)
 
         vertex1mm = mesh_data['vertex1mm']
@@ -148,7 +147,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         # ------------------------------
         if data_type == 'simulation':
             # simulation_results = dict(np.load(data_folder_simulation / file_names[i], allow_pickle=False))
-            simulation_results = dict(np.load(data_folder_simulation / file_names[batch_index], allow_pickle=False))
+            simulation_results = dict(np.load(data_folder_simulation / file_names[i], allow_pickle=False))
         
             x_electrode = simulation_results['electrogram_unipolar'][parameters['t_start']:parameters['t_end']:parameters['time_step'], :] # shape (t, n_node)
             x_electrode = normalize_to_unit_interval(x_electrode)
@@ -166,7 +165,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
             x[:,simulation_results['electrode_id_on_1mm_mesh']] = x_electrode
         elif data_type == 'clinical':
             # load data
-            clinical_data_file_name = name_prefixes[batch_index] + '_catheter.npz'
+            clinical_data_file_name = name_prefixes[i] + '_catheter.npz'
             map_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / clinical_data_file_name, allow_pickle=True)
 
             # find the good electrode nodes that have good signals
