@@ -38,7 +38,7 @@ testing_data_flag = 0 # 0: simulation data; 1: clinical data
 parameters = {}
 parameters['t_start'] = 0
 parameters['time_step'] = 1
-parameters['n_timepoints'] = 499
+parameters['n_timepoints'] = 500
 parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
 
 # training parameters

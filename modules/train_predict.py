@@ -212,7 +212,7 @@ def train_model(parameters):
     
         epoch_end_time = time.time()
         epoch_duration = epoch_end_time - epoch_start_time
-        print(f"training/validation Loss: {train_loss*1000:.4f}e-3 / {val_loss*1000:.4f}e-3")
+        print(f"training/validation Loss: {train_loss*1000:.4f}e-3 / {val_loss*1000:.4f}e-3                              ")
         print(f"computation time: {epoch_duration:.1f} seconds")
 
     return train_loss_history, val_loss_history

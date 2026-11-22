@@ -135,8 +135,6 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         mesh_file_name = name_prefixes[batch_index] + '_mesh.npz'
         mesh_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / mesh_file_name, allow_pickle=True)
 
-        # voxel = mesh_data['voxel']
-        # node = voxel - np.round(voxel.mean(axis=0)).astype(int) # center the coordinates at the origin and convert to integers. shape (n_nodes, 3)
         vertex1mm = mesh_data['vertex1mm']
         node = vertex1mm - np.round(vertex1mm.mean(axis=0)).astype(int) # center the coordinates at the origin and convert to integers. shape (n_nodes, 3)
         n_nodes = node.shape[0]
@@ -149,7 +147,8 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         # load electrograms
         # ------------------------------
         if data_type == 'simulation':
-            simulation_results = dict(np.load(data_folder_simulation / file_names[i], allow_pickle=False))
+            # simulation_results = dict(np.load(data_folder_simulation / file_names[i], allow_pickle=False))
+            simulation_results = dict(np.load(data_folder_simulation / file_names[batch_index], allow_pickle=False))
         
             x_electrode = simulation_results['electrogram_unipolar'][parameters['t_start']:parameters['t_end']:parameters['time_step'], :] # shape (t, n_node)
             x_electrode = normalize_to_unit_interval(x_electrode)
@@ -256,9 +255,6 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
     # build targets_batch: (batch * n_nodes, 1)
     targets_list = [torch.from_numpy(y).float().reshape(-1, 1) for y in y_temp]
     targets_batch = torch.cat(targets_list, dim=0).to(parameters['device'])
-
-    print(targets_batch.shape)
-    print(nodes_batch.shape)
 
     # create MinkowskiEngine sparse tensor
     neural_network_input = ME.SparseTensor(features=feats_batch, coordinates=nodes_batch, device=parameters['device'])
