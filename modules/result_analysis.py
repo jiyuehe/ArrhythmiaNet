@@ -64,7 +64,7 @@ def voxelize_nodes(node):
 
     return voxels, grid_indices
 
-def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, data_type):
+def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, data_type, arrhythmia_type):
     n_samples = len(predicted_data)
 
     for sample_id in np.arange(n_samples):
@@ -100,14 +100,17 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
         data_truth = truth_data[sample_id].flatten()
         data_predicted = predicted_data[sample_id].flatten()
 
+        if arrhythmia_type == 'focal':
+            color_tpye = 'red-blue'
+        if arrhythmia_type == 'flutter':
+            color_tpye = 'red-magenta'
+
         # plot truth map
         fig_name = parameters['result_folder'] / f'{file_names_test[sample_id][:-4]}_map_truth.png'
-        color_tpye = 'red-blue'
         common.electroanatomical_map_on_voxel_cube(node, data_truth, color_tpye, fig_name)
 
         # plot predicted map
         error_mae = np.nanmean(np.abs(data_predicted - data_truth)) # mean absolute error on normalized activation time
         fig_name = parameters['result_folder'] / f'{file_names_test[sample_id][:-4]}_map_predict_MAE_{error_mae:.4f}.png'
-        color_tpye = 'red-blue'
         common.electroanatomical_map_on_voxel_cube(node, data_predicted, color_tpye, fig_name)
 

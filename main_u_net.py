@@ -33,10 +33,13 @@ import numpy as np
 # mode settings
 train_predict_flag = 0 # 1: train; 0: predict
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
+arrhythmia_type = 'flutter' # focal, flutter
 
 parameters = {}
-parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/one_focal')
-# parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/flutter')
+if arrhythmia_type == 'focal':
+   parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/one_focal')
+if arrhythmia_type == 'flutter':
+   parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/flutter')
 
 parameters['t_start'] = 0
 parameters['time_step'] = 1
@@ -135,9 +138,9 @@ if train_predict_flag == 0:
 
    # plot the predicted and true activation time maps
    if testing_data_flag == 0: # 0: simulation data; 1: clinical data
-      modules.result_analysis.plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, data_type='simulation')
+      modules.result_analysis.plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, 'simulation', arrhythmia_type)
    elif testing_data_flag == 1:
-      modules.result_analysis.plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, data_type='clinical')
+      modules.result_analysis.plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, 'clinical', arrhythmia_type)
 
 print('done')
 
