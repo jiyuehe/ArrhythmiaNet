@@ -133,7 +133,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
 
         # load electrode coordinates
         # ------------------------------
-        mesh_file_name = name_prefixes[b] + '_mesh.npz'
+        mesh_file_name = name_prefixes[i] + '_mesh.npz'
         mesh_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / mesh_file_name, allow_pickle=True)
 
         voxel = mesh_data['voxel']
