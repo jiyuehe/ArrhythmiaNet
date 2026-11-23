@@ -187,7 +187,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         if data_type == 'simulation' and train_predict_type == 'train':
             y = simulation_results['lat_voxel'].astype(np.float32)
         elif data_type == 'simulation' and train_predict_type == 'predict':
-            y = simulation_results['lat_voxel_woi'].astype(np.float32)
+            y = simulation_results['lat_voxel'].astype(np.float32)
         elif data_type == 'clinical':
             y = np.full(n_nodes, np.nan, dtype=np.float32)
             y[good_e_id] = activation_time[good_e_id] # assign the clinical activation time to the good electrode nodes according to clinical data

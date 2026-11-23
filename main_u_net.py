@@ -31,7 +31,7 @@ import numpy as np
 
 #%%
 # mode settings
-train_predict_flag = 1 # 1: only do training; 0: only do prediction
+train_predict_flag = 0 # 1: only do training; 0: only do prediction
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
 
 parameters = {}
