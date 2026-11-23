@@ -30,104 +30,6 @@ COMMON_DIR = Path('/home/j/Documents/box/codes/common')
 sys.path.insert(0, str(COMMON_DIR))
 import common
 
-def save_interactive_mesh(voxel, lat_voxel, fig_name):
-    data = lat_voxel
-    data_min = np.nanmin(data)
-    data_max = np.nanmax(data)
-    data_threshold = data_min-0.1 # a little small than data_min, so that places with value of data_min will have color
-    color = common.convert_value_to_red_blue(data, data_min, data_max, data_threshold)
-    
-    # Find the grid spacing so adjacent cubes meet without gaps.
-    axis_steps = [
-        np.diff(np.unique(voxel[:, axis]))
-        for axis in range(3)
-    ]
-    positive_steps = [steps[steps > 0] for steps in axis_steps if steps.size]
-    spacing = min(np.min(steps) for steps in positive_steps) if positive_steps else 1.0
-
-    origin = np.min(voxel, axis=0)
-    voxel_index = np.rint((voxel - origin) / spacing).astype(int)
-    grid_shape = tuple(np.max(voxel_index, axis=0) + 1)
-
-    # One collection is much cheaper to draw than the separate collection
-    # ax.voxels creates for each cube. Include only faces with no neighbour.
-    filled = np.zeros(np.asarray(grid_shape) + 2, dtype=bool)
-    padded_index = voxel_index + 1
-    filled[tuple(padded_index.T)] = True
-    face_offsets = np.array([
-        [[-.5, -.5, -.5], [-.5, -.5, .5], [-.5, .5, .5], [-.5, .5, -.5]],
-        [[.5, -.5, -.5], [.5, .5, -.5], [.5, .5, .5], [.5, -.5, .5]],
-        [[-.5, -.5, -.5], [.5, -.5, -.5], [.5, -.5, .5], [-.5, -.5, .5]],
-        [[-.5, .5, -.5], [-.5, .5, .5], [.5, .5, .5], [.5, .5, -.5]],
-        [[-.5, -.5, -.5], [-.5, .5, -.5], [.5, .5, -.5], [.5, -.5, -.5]],
-        [[-.5, -.5, .5], [.5, -.5, .5], [.5, .5, .5], [-.5, .5, .5]],
-    ])
-    neighbours = np.array([[-1, 0, 0], [1, 0, 0], [0, -1, 0],
-                           [0, 1, 0], [0, 0, -1], [0, 0, 1]])
-    faces = []
-    face_colors = []
-    for offset, corners in zip(neighbours, face_offsets):
-        adjacent = padded_index + offset
-        visible = ~filled[tuple(adjacent.T)]
-        if np.any(visible):
-            centers = origin + voxel_index[visible] * spacing
-            faces.append(centers[:, None, :] + corners[None, :, :] * spacing)
-            face_colors.append(color[visible])
-
-    surface_faces = np.concatenate(faces)
-    surface_colors = np.concatenate(face_colors)
-
-    vertices = surface_faces.reshape(-1, 3)
-    quad_indices = np.arange(len(surface_faces) * 4).reshape(-1, 4)
-    triangle_colors = np.repeat(surface_colors, 2, axis=0)
-    triangle_colors = [
-        f'rgb({r}, {g}, {b})'
-        for r, g, b in np.rint(triangle_colors * 255).astype(int)
-    ]
-    fig = go.Figure(data=go.Mesh3d(
-        x=vertices[:, 0],
-        y=vertices[:, 1],
-        z=vertices[:, 2],
-        i=np.column_stack((quad_indices[:, 0], quad_indices[:, 0])).ravel(),
-        j=np.column_stack((quad_indices[:, 1], quad_indices[:, 2])).ravel(),
-        k=np.column_stack((quad_indices[:, 2], quad_indices[:, 3])).ravel(),
-        facecolor=triangle_colors,
-        flatshading=True,
-        showscale=False,
-    ))
-    lower = origin - spacing / 2
-    upper = origin + (np.asarray(grid_shape) - .5) * spacing
-
-    elev, azim = 70, -70
-
-    elev = np.deg2rad(elev)
-    azim = np.deg2rad(azim)
-    camera_eye = dict(
-        x=2.2 * np.cos(elev) * np.cos(azim),
-        y=2.2 * np.cos(elev) * np.sin(azim),
-        z=2.2 * np.sin(elev),
-    )
-    fig.update_layout(
-        scene=dict(
-            xaxis=dict(visible=False, range=[lower[0], upper[0]]),
-            yaxis=dict(visible=False, range=[lower[1], upper[1]]),
-            zaxis=dict(visible=False, range=[lower[2], upper[2]]),
-            aspectmode='data',
-            dragmode='orbit',
-            camera=dict(
-                eye=camera_eye,
-                up=dict(x=0, y=0, z=1),
-            ),
-        ),
-        margin=dict(l=0, r=0, t=0, b=0),
-    )
-
-    output_path = Path(fig_name)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.write_html(output_path.with_suffix(".html"), include_plotlyjs=True)
-    fig.write_image(output_path, scale=2)
-    common.crop_image(output_path)
-
 def plot_loss_history(result_folder):
     loss_history_path = result_folder / 'loss_history.txt'
     train_loss_history = []
@@ -200,9 +102,12 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
 
         # plot truth map
         fig_name = parameters['result_folder'] / f'{file_names_test[sample_id][:-4]}_map_truth.png'
-        save_interactive_mesh(node, data_truth, fig_name)
+        color_tpye = 'red-blue'
+        common.electroanatomical_map_on_voxel_cube(node, data_truth, color_tpye, fig_name)
 
         # plot predicted map
         error_mae = np.nanmean(np.abs(data_predicted - data_truth)) # mean absolute error on normalized activation time
         fig_name = parameters['result_folder'] / f'{file_names_test[sample_id][:-4]}_map_predict_MAE_{error_mae:.4f}.png'
-        save_interactive_mesh(node, data_predicted, fig_name)
+        color_tpye = 'red-blue'
+        common.electroanatomical_map_on_voxel_cube(node, data_predicted, color_tpye, fig_name)
+
