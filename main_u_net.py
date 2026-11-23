@@ -31,20 +31,25 @@ import numpy as np
 
 #%%
 # mode settings
-train_predict_flag = 0 # 1: train; 0: predict
+train_predict_flag = 1 # 1: train; 0: predict
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
 arrhythmia_type = 'flutter' # focal, flutter
 
 parameters = {}
 if arrhythmia_type == 'focal':
    parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/one_focal')
+
+   parameters['t_start'] = 0
+   parameters['time_step'] = 1
+   parameters['n_timepoints'] = 500
+   parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
 if arrhythmia_type == 'flutter':
    parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/flutter')
 
-parameters['t_start'] = 0
-parameters['time_step'] = 1
-parameters['n_timepoints'] = 500
-parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
+   parameters['t_start'] = 500
+   parameters['time_step'] = 1
+   parameters['n_timepoints'] = 500
+   parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
 
 # training parameters
 parameters['batch_size'] = 10 # number of training samples (electrograms-activation_maps pairs of 1 simulation on 1 geometry) processed together in one pass during training
@@ -101,7 +106,7 @@ if train_predict_flag == 1:
       parameters['model'].load_state_dict(torch.load(model_path, map_location=parameters['device']))
 
    # train the model
-   train_loss_history, val_loss_history = modules.train_predict.train_model(parameters)
+   train_loss_history, val_loss_history = modules.train_predict.train_model(parameters, arrhythmia_type)
 
 # plot loss history
 modules.result_analysis.plot_loss_history(parameters['result_folder'])

@@ -121,7 +121,7 @@ def normalize_to_unit_interval(values):
 
         return normalized.astype(np.float32)
 
-def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, parameters, data_type, train_predict_type):
+def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, parameters, data_type, train_predict_type, arrhythmia_type):
     data_folder_simulation = parameters['data_folder_simulation'] 
     data_folder_patient = parameters['data_folder_patient']
 
@@ -186,7 +186,10 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         # load target data
         # ------------------------------
         if data_type == 'simulation' and train_predict_type == 'train':
-            y = simulation_results['lat_voxel'].astype(np.float32)
+            if arrhythmia_type == 'focal':
+                y = simulation_results['lat_voxel'].astype(np.float32)
+            elif arrhythmia_type == 'flutter':
+                y = simulation_results['lat_voxel_woi'].astype(np.float32)
         elif data_type == 'simulation' and train_predict_type == 'predict':
             y = simulation_results['lat_voxel'].astype(np.float32)
         elif data_type == 'clinical':

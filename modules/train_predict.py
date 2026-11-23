@@ -51,7 +51,7 @@ def mse_loss(predictions, targets):
 
     return loss
 
-def train_model(parameters):
+def train_model(parameters, arrhythmia_type):
     # assign the loss function
     criterion = mse_loss
 
@@ -107,7 +107,7 @@ def train_model(parameters):
             if not memory_reported and device.type == 'cuda':
                 torch.cuda.reset_peak_memory_stats(device)
 
-            neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_train, name_prefixes, parameters, data_type='simulation', train_predict_type='train') # when train_predict_type='train', target_sparse will have values for all voxels, this is what we want during training: input only the subset of voxels as electrodes, but utilize all voxels' activation times as the target
+            neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_train, name_prefixes, parameters, 'simulation', 'train', arrhythmia_type) # when train_predict_type='train', target_sparse will have values for all voxels, this is what we want during training: input only the subset of voxels as electrodes, but utilize all voxels' activation times as the target
 
             if not memory_reported:
                 _print_cuda_memory('after first batch is loaded', device)
@@ -161,7 +161,7 @@ def train_model(parameters):
                 start_idx = batch_idx * parameters['batch_size']
                 end_idx = min((batch_idx + 1) * parameters['batch_size'], n_validation_samples)
 
-                neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_validation, name_prefixes, parameters, data_type='simulation', train_predict_type='train') # when train_predict_type='train', target_sparse will have values for all voxels, this is what we want during training: input only the subset of voxels as electrodes, but utilize all voxels' activation times as the target
+                neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_validation, name_prefixes, parameters, 'simulation', 'train', arrhythmia_type) # when train_predict_type='train', target_sparse will have values for all voxels, this is what we want during training: input only the subset of voxels as electrodes, but utilize all voxels' activation times as the target
                 
                 # forward pass (no gradient tracking)
                 outputs = parameters['model'](neural_network_input)
@@ -217,7 +217,7 @@ def train_model(parameters):
 
     return train_loss_history, val_loss_history
 
-def predict(parameters, file_names_test, data_type):
+def predict(parameters, file_names_test, data_type, arrhythmia_type):
     n_out_channel = 1
 
     parameters['model'].eval()
@@ -240,7 +240,7 @@ def predict(parameters, file_names_test, data_type):
             elif data_type == 'clinical':
                 name_prefixes = [file_name.split('_clinical_data.npz')[0] for file_name in file_names_test[start_idx:end_idx]] # extract name prefixes for loading clinical data
 
-            neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_test, name_prefixes, parameters, data_type, train_predict_type='predict')
+            neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_test, name_prefixes, parameters, data_type, 'predict', arrhythmia_type)
 
             # forward pass
             outputs = parameters['model'](neural_network_input)
