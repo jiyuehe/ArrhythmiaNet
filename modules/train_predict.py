@@ -275,7 +275,6 @@ def predict(parameters, file_names_test, data_type):
                 truth_b = target_sparse.F.cpu()[id, :].T  # shape: (n_out_channel, n_nodes_b)
                 all_truths.append(truth_b)
 
-
         # return as lists since n_nodes may differ per sample
         predictions = all_predictions # list of (n_out_channel, n_nodes_all_samples) arrays
         truths = all_truths # list of (n_out_channel, n_nodes_all_samples) tensors

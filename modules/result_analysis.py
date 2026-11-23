@@ -126,6 +126,7 @@ def save_interactive_mesh(voxel, lat_voxel, fig_name):
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.write_html(output_path.with_suffix(".html"), include_plotlyjs=True)
     fig.write_image(output_path, scale=2)
+    common.crop_image(output_path)
 
 def plot_loss_history(result_folder):
     loss_history_path = result_folder / 'loss_history.txt'
