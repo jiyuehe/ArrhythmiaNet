@@ -134,8 +134,8 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         mesh_file_name = name_prefixes[i] + '_mesh.npz'
         mesh_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / mesh_file_name, allow_pickle=True)
 
-        vertex1mm = mesh_data['vertex1mm']
-        node = vertex1mm - np.round(vertex1mm.mean(axis=0)).astype(int) # center the coordinates at the origin and convert to integers. shape (n_nodes, 3)
+        voxel = mesh_data['voxel']
+        node = voxel - np.round(voxel.mean(axis=0)).astype(int) # center the coordinates at the origin and convert to integers. shape (n_nodes, 3)
         n_nodes = node.shape[0]
 
         b = i - start_idx # batch index, 1 batch corresponds to 1 simulation on 1 geometry
@@ -146,23 +146,20 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         # load electrograms
         # ------------------------------
         if data_type == 'simulation':
-            # simulation_results = dict(np.load(data_folder_simulation / file_names[i], allow_pickle=False))
             simulation_results = dict(np.load(data_folder_simulation / file_names[i], allow_pickle=False))
         
             x_electrode = simulation_results['electrogram_unipolar'][parameters['t_start']:parameters['t_end']:parameters['time_step'], :] # shape (t, n_node)
             x_electrode = normalize_to_unit_interval(x_electrode)
             # NOTE: x contains simulated electrograms for every node
 
-            # randomly make some electrodes bad
-            n_electrodes = x_electrode.shape[1]
-            bad_electrode_ratio = 0
-            n_bad_electrode = int(bad_electrode_ratio * n_electrodes)
-            non_e_id = np.random.choice(n_electrodes, n_bad_electrode, replace=False)
-            x_electrode[:, non_e_id] = 0 # set electrograms of bad electrode nodes to 0. the bad electrode nodes are randomly selected
+            # none electrode voxel ids
+            all_voxel_ids = np.arange(0,n_nodes)
+            electrode_id_on_voxel = simulation_results['electrode_id_on_voxel']
+            non_e_id = np.setdiff1d(all_voxel_ids, electrode_id_on_voxel)
 
             # electrograms on each nodes
             x = np.zeros((x_electrode.shape[0], n_nodes))
-            x[:,simulation_results['electrode_id_on_1mm_mesh']] = x_electrode
+            x[:,electrode_id_on_voxel] = x_electrode
         elif data_type == 'clinical':
             # load data
             clinical_data_file_name = name_prefixes[i] + '_catheter.npz'
@@ -188,12 +185,9 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         # load target data
         # ------------------------------
         if data_type == 'simulation' and train_predict_type == 'train':
-            y = simulation_results['lat_vertex1mm'].astype(np.float32)
-            # y = simulation_results['lat_vertex1mm_woi'].astype(np.float32)
+            y = simulation_results['lat_voxel'].astype(np.float32)
         elif data_type == 'simulation' and train_predict_type == 'predict':
-            y = simulation_results['lat_vertex1mm'].astype(np.float32)
-            # y = simulation_results['lat_vertex1mm_woi'].astype(np.float32)
-            # y[non_e_id] = np.nan # set activation time of nodes without activation to nan
+            y = simulation_results['lat_voxel_woi'].astype(np.float32)
         elif data_type == 'clinical':
             y = np.full(n_nodes, np.nan, dtype=np.float32)
             y[good_e_id] = activation_time[good_e_id] # assign the clinical activation time to the good electrode nodes according to clinical data
