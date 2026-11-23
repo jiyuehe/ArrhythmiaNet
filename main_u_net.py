@@ -31,7 +31,7 @@ import numpy as np
 
 #%%
 # mode settings
-train_predict_flag = 1 # 1: train; 0: predict
+train_predict_flag = 0 # 1: train; 0: predict
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
 
 parameters = {}
@@ -112,7 +112,7 @@ if train_predict_flag == 0:
    if testing_data_flag == 0: # 0: simulation data; 1: clinical data
       # uniformly sample N files
       file_names_test = np.array(parameters['file_names_test'])
-      N = len(file_names_test)
+      N = len(file_names_test) # give a number, or use len(file_names_test)
       if len(file_names_test) > N:
          indices = np.linspace(0, len(file_names_test) - 1, N, dtype=int)
          file_names_test = file_names_test[indices]

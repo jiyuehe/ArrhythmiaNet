@@ -129,16 +129,17 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
     y_temp = []
     nodes_list = []
     for i in range(start_idx, end_idx):
+        b = i - start_idx # batch index, 1 batch corresponds to 1 simulation on 1 geometry
+
         # load electrode coordinates
         # ------------------------------
-        mesh_file_name = name_prefixes[i] + '_mesh.npz'
+        mesh_file_name = name_prefixes[b] + '_mesh.npz'
         mesh_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / mesh_file_name, allow_pickle=True)
 
         voxel = mesh_data['voxel']
         node = voxel - np.round(voxel.mean(axis=0)).astype(int) # center the coordinates at the origin and convert to integers. shape (n_nodes, 3)
         n_nodes = node.shape[0]
 
-        b = i - start_idx # batch index, 1 batch corresponds to 1 simulation on 1 geometry
         batch_indices = torch.full((n_nodes, 1), b, dtype=torch.int32)
         temp = torch.cat([batch_indices, torch.from_numpy(node).int()], dim=1) # shape (n_nodes, 4) = [batch_indices | x | y | z]
         nodes_list.append(temp)
