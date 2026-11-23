@@ -128,7 +128,7 @@ if train_predict_flag == 0:
          indices = np.linspace(0, len(file_names_test) - 1, N, dtype=int)
          file_names_test = file_names_test[indices]
 
-      predicted_data, truth_data = modules.train_predict.predict(parameters, file_names_test, data_type='simulation')
+      predicted_data, truth_data = modules.train_predict.predict(parameters, file_names_test, 'simulation', arrhythmia_type)
    elif testing_data_flag == 1:
       file_names_test = [
          '99_2-LaFAM_cartofinder_data_clinical_data.npz',
@@ -136,7 +136,7 @@ if train_predict_flag == 0:
          '101_1-lagood_clinical_data.npz',
       ]
 
-      predicted_data, truth_data = modules.train_predict.predict(parameters, file_names_test, data_type='clinical')
+      predicted_data, truth_data = modules.train_predict.predict(parameters, file_names_test, 'clinical', arrhythmia_type)
 
    # convert all elements to numpy arrays if they are tensors
    predicted_data = [x.numpy() if hasattr(x, 'numpy') else x for x in predicted_data]

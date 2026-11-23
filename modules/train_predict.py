@@ -236,9 +236,9 @@ def predict(parameters, file_names_test, data_type, arrhythmia_type):
 
             # load data
             if data_type == 'simulation':
-                name_prefixes = [file_name.split('_simulation_results_')[0] for file_name in file_names_test[start_idx:end_idx]] # extract name prefixes for loading clinical data
+                name_prefixes = [file_name.split('_simulation_results_')[0] for file_name in file_names_test] # extract name prefixes for loading clinical data
             elif data_type == 'clinical':
-                name_prefixes = [file_name.split('_clinical_data.npz')[0] for file_name in file_names_test[start_idx:end_idx]] # extract name prefixes for loading clinical data
+                name_prefixes = [file_name.split('_clinical_data.npz')[0] for file_name in file_names_test] # extract name prefixes for loading clinical data
 
             neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_test, name_prefixes, parameters, data_type, 'predict', arrhythmia_type)
 
