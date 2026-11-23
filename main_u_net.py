@@ -33,7 +33,7 @@ import numpy as np
 # mode settings
 train_predict_flag = 1 # 1: train; 0: predict
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
-arrhythmia_type = 'flutter' # focal, flutter
+arrhythmia_type = 'focal' # focal, flutter
 
 parameters = {}
 if arrhythmia_type == 'focal':
