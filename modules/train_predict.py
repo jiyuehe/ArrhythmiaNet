@@ -218,7 +218,7 @@ def train_model(parameters, arrhythmia_type):
     return train_loss_history, val_loss_history
 
 def predict(parameters, file_names_test, data_type, arrhythmia_type):
-    n_out_channel = 1
+    n_out_channel = 3 if arrhythmia_type == 'flutter' else 1
 
     parameters['model'].eval()
 

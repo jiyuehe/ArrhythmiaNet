@@ -187,13 +187,22 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         if data_type == 'simulation' and (train_predict_type == 'train' or train_predict_type == 'predict'):
             if arrhythmia_type == 'focal':
                 y = simulation_results['lat_voxel'].astype(np.float32)
+                y = normalize_to_unit_interval(y)
             elif arrhythmia_type == 'flutter':
                 y = simulation_results['lat_voxel_woi'].astype(np.float32)
+                no_value_mask = ~np.isfinite(y)
+                y_normalized = normalize_to_unit_interval(y)
+                phase = 2 * np.pi * y_normalized
+                y1 = np.sin(phase)
+                y2 = np.cos(phase)
+                y1 = np.where(no_value_mask, np.nan, y1)
+                y2 = np.where(no_value_mask, np.nan, y2)
+                y3 = no_value_mask.astype(np.float32)
+                y = np.stack((y1, y2, y3), axis=1)
+
         elif data_type == 'clinical':
             y = np.full(n_nodes, np.nan, dtype=np.float32)
             y[good_e_id] = activation_time[good_e_id] # assign the clinical activation time to the good electrode nodes according to clinical data
-
-        y = normalize_to_unit_interval(y)
 
         y_temp.append(y)
 
@@ -246,8 +255,11 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
     feats_list = [torch.from_numpy(x).float().T for x in x_temp]  # each: (n_nodes, t)
     feats_batch = torch.cat(feats_list, dim=0).to(parameters['device'])
 
-    # build targets_batch: (batch * n_nodes, 1)
-    targets_list = [torch.from_numpy(y).float().reshape(-1, 1) for y in y_temp]
+    # build targets_batch: (batch * n_nodes, n_output_channels)
+    targets_list = [
+        torch.from_numpy(y).float() if y.ndim == 2 else torch.from_numpy(y).float().reshape(-1, 1)
+        for y in y_temp
+    ]
     targets_batch = torch.cat(targets_list, dim=0).to(parameters['device'])
 
     # create MinkowskiEngine sparse tensor

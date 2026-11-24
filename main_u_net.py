@@ -28,13 +28,12 @@ import numpy as np
 
 #%%
 torch.cuda.empty_cache() # release unused cached CUDA memory
-print(torch.cuda.memory_summary()) # inspect GPU memory
 
 #%%
 # mode settings
 train_predict_flag = 0 # 1: train; 0: predict
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
-arrhythmia_type = 'focal' # focal, flutter
+arrhythmia_type = 'flutter' # focal, flutter
 
 parameters = {}
 if arrhythmia_type == 'focal':
@@ -57,10 +56,10 @@ if arrhythmia_type == 'flutter':
    parameters['result_folder'] = script_dir / 'result' / 'flutter'
 
 # training parameters
-parameters['batch_size'] = 10 # number of training samples (electrograms-activation_maps pairs of 1 simulation on 1 geometry) processed together in one pass during training
+parameters['batch_size'] = 6 # number of training samples (electrograms-activation_maps pairs of 1 simulation on 1 geometry) processed together in one pass during training
 parameters['learning_rate'] = 1e-4 # too small or too big are both bad
 parameters['epochs'] = 30 # maximum epochs (training may stop earlier with early stopping)
-parameters['early_stopping_patience'] = 5 # stop training if no improvement for this many epochs
+parameters['early_stopping_patience'] = 6 # stop training if no improvement for this many epochs
 
 parameters['data_folder_patient'] = Path('/home/j/Desktop/ssd/carto3_data/processed')
 parameters['result_folder'].mkdir(exist_ok=True)
@@ -82,11 +81,14 @@ parameters['device'] = torch.device('cuda' if torch.cuda.is_available() else 'cp
 try:
    import MinkowskiEngine as ME # https://nvidia.github.io/MinkowskiEngine/overview.html
 
-   parameters['model'] = modules.unet_minkowski.MinkowskiUNet(in_channels=parameters['n_timepoints']+1, out_channels=1,D=3).to(parameters['device']) 
-   # D is the dimension of the input data
-   # in_channels is n_timepoints channels for the electrogram, plus 1 channel as an indicator for electrode nodes (1 for electrode nodes, 0 for non-electrode nodes)
-   # out_channels is 1 for prediction activation time map
-   # out_channels is 3 for prediction of phase map: sin(phase), cos(phase), a mask for scar
+   if arrhythmia_type == 'focal':
+      parameters['model'] = modules.unet_minkowski.MinkowskiUNet(in_channels=parameters['n_timepoints']+1, out_channels=1, D=3).to(parameters['device']) 
+      # D is the dimension of the input data
+      # in_channels is n_timepoints channels for the electrogram, plus 1 channel as an indicator for electrode nodes (1 for electrode nodes, 0 for non-electrode nodes)
+      # out_channels is 1 for prediction activation time map
+   if arrhythmia_type == 'flutter':
+      parameters['model'] = modules.unet_minkowski.MinkowskiUNet(in_channels=parameters['n_timepoints']+1, out_channels=3, D=3, out_activation='sin_cos_mask').to(parameters['device'])
+      # out_channels is 3 for prediction of phase map: sin(phase), cos(phase), a mask for scar
 except ImportError:
    print('MinkowskiEngine is not installed.')
 

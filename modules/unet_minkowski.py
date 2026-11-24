@@ -91,16 +91,33 @@ class MinkowskiUp(nn.Module):
         return self.double_conv(x)
 
 class MinkowskiOutConv(nn.Module):
-    def __init__(self, in_channels, out_channels, D=3):
+    def __init__(self, in_channels, out_channels, D=3, activation='sigmoid'):
         super().__init__()
         self.conv = ME.MinkowskiConvolution(in_channels, out_channels, kernel_size=1, stride=1, dimension=D)
+        self.activation = activation
         self.sigmoid = ME.MinkowskiSigmoid()
 
     def forward(self, x):
-        return self.sigmoid(self.conv(x))
+        out = self.conv(x)
+        if self.activation == 'sigmoid':
+            return self.sigmoid(out)
+        if self.activation == 'sin_cos_mask':
+            features = torch.cat(
+                (
+                    torch.tanh(out.F[:, :2]),
+                    torch.sigmoid(out.F[:, 2:3]),
+                ),
+                dim=1,
+            )
+            return ME.SparseTensor(
+                features=features,
+                coordinate_map_key=out.coordinate_map_key,
+                coordinate_manager=out.coordinate_manager,
+            )
+        raise ValueError(f'Unknown output activation: {self.activation}')
 
 class MinkowskiUNet(nn.Module):
-    def __init__(self, in_channels, out_channels, D=3): # D: Dimension
+    def __init__(self, in_channels, out_channels, D=3, out_activation='sigmoid'): # D: Dimension
         super(MinkowskiUNet, self).__init__()
         
         BASE_CHANNELS = 64 
@@ -122,7 +139,7 @@ class MinkowskiUNet(nn.Module):
         # self.up4 = MinkowskiUp(BASE_CHANNELS * 2, BASE_CHANNELS, D)
         
         # output convolution
-        self.outc = MinkowskiOutConv(BASE_CHANNELS, out_channels, D)
+        self.outc = MinkowskiOutConv(BASE_CHANNELS, out_channels, D, activation=out_activation)
         
     def forward(self, x):
         # encoder

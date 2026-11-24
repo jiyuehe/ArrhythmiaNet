@@ -97,12 +97,30 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
             good_e_id = [i for i, x in enumerate(act) if x != 0]
             non_e_id = np.setdiff1d(np.arange(n_nodes), good_e_id)
 
-        data_truth = truth_data[sample_id].flatten()
-        data_predicted = predicted_data[sample_id].flatten()
-
         if arrhythmia_type == 'focal':
+            data_truth = truth_data[sample_id].flatten()
+            data_predicted = predicted_data[sample_id].flatten()
             color_tpye = 'red-blue'
         if arrhythmia_type == 'flutter':
+            truth_channels = truth_data[sample_id]
+            predicted_channels = predicted_data[sample_id]
+            if hasattr(truth_channels, 'detach'):
+                truth_channels = truth_channels.detach().cpu().numpy()
+            if hasattr(predicted_channels, 'detach'):
+                predicted_channels = predicted_channels.detach().cpu().numpy()
+
+            truth_sin = truth_channels[0]
+            truth_cos = truth_channels[1]
+            truth_no_value = truth_channels[2] > 0.5
+            data_truth = np.mod(np.arctan2(truth_sin, truth_cos), 2 * np.pi) / (2 * np.pi)
+            data_truth[truth_no_value] = np.nan
+
+            predicted_sin = predicted_channels[0]
+            predicted_cos = predicted_channels[1]
+            predicted_no_value = predicted_channels[2] > 0.5
+            data_predicted = np.mod(np.arctan2(predicted_sin, predicted_cos), 2 * np.pi) / (2 * np.pi)
+            data_predicted[predicted_no_value] = np.nan
+            
             color_tpye = 'red-magenta'
 
         # plot truth map
@@ -113,4 +131,3 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
         error_mae = np.nanmean(np.abs(data_predicted - data_truth)) # mean absolute error on normalized activation time
         fig_name = parameters['result_folder'] / f'{file_names_test[sample_id][:-4]}_map_predict_MAE_{error_mae:.4f}.png'
         common.electroanatomical_map_on_voxel_cube(node, data_predicted, color_tpye, fig_name)
-
