@@ -24,16 +24,13 @@ import modules
 import torch
 import numpy as np
 
-# from torchview import draw_graph # for visualizing the neural network model architecture
-
-#%%
 torch.cuda.empty_cache() # release unused cached CUDA memory
 
 #%%
 # mode settings
-train_predict_flag = 0 # 1: train; 0: predict
+train_predict_flag = 1 # 1: train; 0: predict
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
-arrhythmia_type = 'flutter' # focal, flutter
+arrhythmia_type = 'focal' # focal, flutter
 
 parameters = {}
 if arrhythmia_type == 'focal':

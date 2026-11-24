@@ -41,34 +41,44 @@ def _load_npz_with_numpy2_pickle_compat(file_path, allow_pickle=True):
 
 def categorize_files_into_train_validation_test(data_folder_simulation):
     train_validation_test_file_names = 'train_validation_test_file_names.txt'
+    split_file_path = data_folder_simulation / train_validation_test_file_names
 
-    if not (data_folder_simulation / train_validation_test_file_names).exists(): # if file not exist
+    if not split_file_path.exists():
         # grab file names of the simulation results
         simulation_files = list(data_folder_simulation.glob('*_simulation_results_*.npz'))
 
-        n_samples = len(simulation_files)
+        patient_files = {}
+        for simulation_file in simulation_files:
+            patient_id = simulation_file.name.split('_', 1)[0]
+            patient_files.setdefault(patient_id, []).append(simulation_file.name)
 
-        # randomly split into training, validation, and testing
-        perm = np.random.permutation(n_samples)
+        patient_ids = list(patient_files)
+        n_patients = len(patient_ids)
 
-        n_train = int(0.8 * n_samples)
-        n_val = int(0.15 * n_samples)
+        # randomly split patients so every simulation for a patient stays together.
+        perm = np.random.permutation(n_patients)
 
-        file_id_train = perm[:n_train]
-        file_id_validation = perm[n_train:n_train + n_val]
-        file_id_test = perm[n_train + n_val:]
+        n_train = int(0.8 * n_patients)
+        n_val = int(0.15 * n_patients)
+
+        patient_indices_train = perm[:n_train]
+        patient_indices_validation = perm[n_train:n_train + n_val]
+        patient_indices_test = perm[n_train + n_val:]
 
         # write a text file to save the file names of the training, validation and test data 
-        with open(data_folder_simulation / train_validation_test_file_names, 'w') as f:
+        with open(split_file_path, 'w') as f:
             f.write('[train]\n')
-            for idx in file_id_train:
-                f.write(f'{simulation_files[idx].name}\n')
+            for idx in patient_indices_train:
+                for file_name in patient_files[patient_ids[idx]]:
+                    f.write(f'{file_name}\n')
             f.write('[validation]\n')
-            for idx in file_id_validation:
-                f.write(f'{simulation_files[idx].name}\n')
+            for idx in patient_indices_validation:
+                for file_name in patient_files[patient_ids[idx]]:
+                    f.write(f'{file_name}\n')
             f.write('[test]\n')
-            for idx in file_id_test:
-                f.write(f'{simulation_files[idx].name}\n')
+            for idx in patient_indices_test:
+                for file_name in patient_files[patient_ids[idx]]:
+                    f.write(f'{file_name}\n')
 
     # load the file names of the training, validation and test data from the text file
     with open(data_folder_simulation / train_validation_test_file_names, 'r') as f:
