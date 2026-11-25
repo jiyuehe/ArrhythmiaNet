@@ -209,9 +209,9 @@ def train_model(parameters, arrhythmia_flag):
                 break
     
         epoch_end_time = time.time()
-        epoch_duration = epoch_end_time - epoch_start_time
+        epoch_duration = (epoch_end_time - epoch_start_time) / 60
         print(f"training/validation Loss: {train_loss*1000:.3f}e-3 / {val_loss*1000:.3f}e-3                              ")
-        print(f"computation time: {epoch_duration:.1f} seconds")
+        print(f"computation time: {epoch_duration:.1f} minutes")
 
 def predict(parameters, file_names_test, testing_data_flag, arrhythmia_flag):
     if arrhythmia_flag == 0:
