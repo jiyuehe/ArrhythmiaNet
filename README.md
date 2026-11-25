@@ -72,8 +72,6 @@ apt update
 pip install matplotlib
 pip install plotly
 pip install kaleido
-apt install -y graphviz
-pip install graphviz
 pip install pandas
 ```
 Plotly's PNG export also needs Chrome or Chromium. If neither is installed, run `plotly_get_chrome`.

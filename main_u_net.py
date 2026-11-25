@@ -17,9 +17,6 @@
 import os
 from pathlib import Path
 script_dir = os.path.dirname(os.path.abspath(__file__)) # get the path of the current script
-os.chdir(script_dir) # change the working directory
-script_dir = Path(script_dir)
-
 import modules
 import torch
 import numpy as np
@@ -27,45 +24,37 @@ import numpy as np
 torch.cuda.empty_cache() # release unused cached CUDA memory
 
 #%%
-# mode settings
+# settings
 train_predict_flag = 0 # 1: train; 0: predict
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
 arrhythmia_flag = 0 # 0: focal; 1: flutter
 continue_training_flag = 0 # 0: train from scratch; 1: load best_unet_model.pth and continue training
 
 parameters = {}
+parameters['batch_size'] = 10 # number of training samples. 1 sample is an electrograms-activation_maps pairs of 1 simulation on 1 geometry
+parameters['learning_rate'] = 1e-4 # too small or too big are both bad
+parameters['epochs'] = 30 # maximum training epochs. may stop earlier with early stopping
+parameters['early_stopping_patience'] = 10 # stop training if no improvement for this many epochs
 if arrhythmia_flag == 0:
    parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/one_focal')
-
+   parameters['result_folder'] = script_dir / 'result' / 'focal'
    parameters['t_start'] = 0
    parameters['time_step'] = 1
    parameters['n_timepoints'] = 500
    parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
-
-   parameters['result_folder'] = script_dir / 'result' / 'focal'
 if arrhythmia_flag == 1:
    parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/flutter')
-
+   parameters['result_folder'] = script_dir / 'result' / 'flutter'
    parameters['t_start'] = 500
    parameters['time_step'] = 1
    parameters['n_timepoints'] = 500
    parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
-
-   parameters['result_folder'] = script_dir / 'result' / 'flutter'
-
-# training parameters
-parameters['batch_size'] = 10 # number of training samples (electrograms-activation_maps pairs of 1 simulation on 1 geometry) processed together in one pass during training
-parameters['learning_rate'] = 1e-4 # too small or too big are both bad
-parameters['epochs'] = 30 # maximum epochs (training may stop earlier with early stopping)
-parameters['early_stopping_patience'] = 10 # stop training if no improvement for this many epochs
-
-parameters['data_folder_patient'] = Path('/home/j/Desktop/ssd/carto3_data/processed')
+parameters['data_folder_patient'] = Path('/home/j/Documents/box/carto3_files/data_npz/adjudicated')
 parameters['result_folder'].mkdir(exist_ok=True)
 
 #%%
 # categorize the data files into training, validation, and test sets
 file_names_train, file_names_validation, file_names_test = modules.utility.categorize_files_into_train_validation_test(parameters['data_folder_simulation'])
-
 parameters['file_names_train'] = file_names_train
 parameters['file_names_validation'] = file_names_validation
 parameters['file_names_test'] = file_names_test
@@ -79,26 +68,20 @@ parameters['device'] = torch.device('cuda' if torch.cuda.is_available() else 'cp
 try:
    import MinkowskiEngine as ME # https://nvidia.github.io/MinkowskiEngine/overview.html
 
-   if arrhythmia_flag == 0:
+   if arrhythmia_flag == 0: # focal
       parameters['model'] = modules.unet_minkowski.MinkowskiUNet(in_channels=parameters['n_timepoints']+1, out_channels=1, D=3).to(parameters['device']) 
       # D is the dimension of the input data
-      # in_channels is n_timepoints channels for the electrogram, plus 1 channel as an indicator for electrode nodes (1 for electrode nodes, 0 for non-electrode nodes)
-      # out_channels is 1 for prediction activation time map
-   if arrhythmia_flag == 1:
+      # in_channels is n_timepoints channels for the electrogram, plus 1 channel as an indicator for electrode nodes: 1 for electrode nodes, 0 for non-electrode nodes
+      # out_channels is 1 for activation time map
+   if arrhythmia_flag == 1: # flutter
       parameters['model'] = modules.unet_minkowski.MinkowskiUNet(in_channels=parameters['n_timepoints']+1, out_channels=3, D=3, out_activation='sin_cos_mask').to(parameters['device'])
-      # out_channels is 3 for prediction of phase map: sin(phase), cos(phase), a mask for scar
+      # out_channels is 3 for of phase map: sin(phase), cos(phase), a mask for non-conductive region due to pulmonary vein isolation
+
+   print(f'model created with {sum(p.numel() for p in parameters["model"].parameters())} parameters')
+   print(parameters['model']) # use print to show model architecture
 except ImportError:
    print('MinkowskiEngine is not installed.')
 
-debug_flag = 0
-if debug_flag == 1:
-   print(f'Model created with {sum(p.numel() for p in parameters["model"].parameters())} parameters')
-
-   # torchview does not support MinkowskiEngine SparseTensor
-   # use print to show model architecture
-   print(parameters['model'])
-
-#%%
 # train the model
 if train_predict_flag == 1:
    print('train model')

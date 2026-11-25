@@ -23,7 +23,7 @@ except ImportError:
     ME = None
 
 def load_npz_with_numpy2_pickle_compatibility(file_path, allow_pickle=True):
-    """Load npz and materialize arrays with NumPy 2.x -> 1.x pickle compatibility."""
+    # load npz and materialize arrays with NumPy 2.x -> 1.x pickle compatibility
     try:
         data = np.load(file_path, allow_pickle=allow_pickle)
         return {k: data[k] for k in data.files}

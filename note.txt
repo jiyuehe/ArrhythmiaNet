@@ -47,4 +47,14 @@ Epoch 10
 training/validation Loss: 0.8324e-3 / 1.3532e-3                              
 computation time: 2615.8 seconds
 Epoch 11
-  Training batch 54/307.          
+training/validation Loss: 0.8182e-3 / 0.9830e-3                              
+computation time: 2620.9 seconds
+Epoch 12
+    no improvement for 1 epoch(s) (min val loss: 0.9830e-3).                  
+training/validation Loss: 0.8026e-3 / 1.3333e-3                              
+computation time: 2616.1 seconds
+Epoch 13
+training/validation Loss: 0.7832e-3 / 0.9447e-3                              
+computation time: 2620.5 seconds
+Epoch 14
+  Training batch 137/307.          
