@@ -30,11 +30,11 @@ torch.cuda.empty_cache() # release unused cached CUDA memory
 # mode settings
 train_predict_flag = 0 # 1: train; 0: predict
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
-arrhythmia_type = 'focal' # focal, flutter
+arrhythmia_type = 0 # 0: focal; 1: flutter
 continue_training = 0 # 0: train from scratch; 1: load best_unet_model.pth and continue training
 
 parameters = {}
-if arrhythmia_type == 'focal':
+if arrhythmia_type == 0:
    parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/one_focal')
 
    parameters['t_start'] = 0
@@ -43,7 +43,7 @@ if arrhythmia_type == 'focal':
    parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
 
    parameters['result_folder'] = script_dir / 'result' / 'focal'
-if arrhythmia_type == 'flutter':
+if arrhythmia_type == 1:
    parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/flutter')
 
    parameters['t_start'] = 500
@@ -79,12 +79,12 @@ parameters['device'] = torch.device('cuda' if torch.cuda.is_available() else 'cp
 try:
    import MinkowskiEngine as ME # https://nvidia.github.io/MinkowskiEngine/overview.html
 
-   if arrhythmia_type == 'focal':
+   if arrhythmia_type == 0:
       parameters['model'] = modules.unet_minkowski.MinkowskiUNet(in_channels=parameters['n_timepoints']+1, out_channels=1, D=3).to(parameters['device']) 
       # D is the dimension of the input data
       # in_channels is n_timepoints channels for the electrogram, plus 1 channel as an indicator for electrode nodes (1 for electrode nodes, 0 for non-electrode nodes)
       # out_channels is 1 for prediction activation time map
-   if arrhythmia_type == 'flutter':
+   if arrhythmia_type == 1:
       parameters['model'] = modules.unet_minkowski.MinkowskiUNet(in_channels=parameters['n_timepoints']+1, out_channels=3, D=3, out_activation='sin_cos_mask').to(parameters['device'])
       # out_channels is 3 for prediction of phase map: sin(phase), cos(phase), a mask for scar
 except ImportError:
@@ -111,8 +111,8 @@ if train_predict_flag == 1:
    # train the model
    train_loss_history, val_loss_history = modules.train_predict.train_model(parameters, arrhythmia_type)
 
-# plot loss history
-modules.result_analysis.plot_loss_history(parameters['result_folder'])
+   # plot loss history
+   modules.result_analysis.plot_loss_history(parameters['result_folder'])
 
 # predict using the trained model
 if train_predict_flag == 0:
@@ -120,22 +120,20 @@ if train_predict_flag == 0:
 
    parameters['model'].load_state_dict(torch.load(parameters['result_folder'] / 'best_unet_model.pth', map_location=parameters['device'])) # load the best model
 
-   if testing_data_flag == 0: # 0: simulation data; 1: clinical data
+   if testing_data_flag == 0: # simulation
       # uniformly sample N files
       file_names_test = np.array(parameters['file_names_test'])
       N = len(file_names_test) # give a number, or use len(file_names_test)
       if len(file_names_test) > N:
          indices = np.linspace(0, len(file_names_test) - 1, N, dtype=int)
          file_names_test = file_names_test[indices]
-
-      predicted_data, truth_data = modules.train_predict.predict(parameters, file_names_test, 'simulation', arrhythmia_type)
-   elif testing_data_flag == 1:
+   elif testing_data_flag == 1: # clinical
       file_names_test = [
          '10_2-LA FAM_carto_catheter.npz',
          '60_2-LA_ACTIVATION_carto_catheter.npz',
       ]
 
-      predicted_data, truth_data = modules.train_predict.predict(parameters, file_names_test, 'clinical', arrhythmia_type)
+   predicted_data, truth_data = modules.train_predict.predict(parameters, file_names_test, testing_data_flag, arrhythmia_type)
 
    # convert all elements to numpy arrays if they are tensors
    predicted_data = [x.numpy() if hasattr(x, 'numpy') else x for x in predicted_data]
@@ -144,10 +142,7 @@ if train_predict_flag == 0:
    print('prediction done')
 
    # plot the predicted and true activation time maps
-   if testing_data_flag == 0: # 0: simulation data; 1: clinical data
-      modules.result_analysis.plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, 'simulation', arrhythmia_type)
-   elif testing_data_flag == 1:
-      modules.result_analysis.plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, 'clinical', arrhythmia_type)
+   modules.result_analysis.plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, testing_data_flag, arrhythmia_type)
 
 print('done')
 

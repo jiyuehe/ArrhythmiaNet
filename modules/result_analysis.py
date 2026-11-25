@@ -64,16 +64,16 @@ def voxelize_nodes(node):
 
     return voxels, grid_indices
 
-def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, data_type, arrhythmia_type):
+def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, train_predict_flag, arrhythmia_type):
     n_samples = len(predicted_data)
 
     for sample_id in np.arange(n_samples):
         print(f'plotting sample {sample_id+1}/{n_samples}')
 
         # load geometry data
-        if data_type == 'simulation':
+        if train_predict_flag == 0: # simulation
             name_prefix = file_names_test[sample_id].split('_simulation_results_')[0]
-        elif data_type == 'clinical':
+        elif train_predict_flag == 1: # clinical
             name_prefix = file_names_test[sample_id].split('_clinical_data')[0]
 
         mesh_data = np.load(parameters['data_folder_patient'] / f'{name_prefix}_mesh.npz', allow_pickle=True)
@@ -82,13 +82,13 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
         n_nodes = node.shape[0]
 
         # electrode voxel ids
-        if data_type == 'simulation':
+        if train_predict_flag == 0: # simulation
             pass
             # # randomly make some electrodes bad
             # bad_electrode_ratio = 0
             # n_bad_electrode = int(bad_electrode_ratio * n_nodes)
             # non_e_id = np.random.choice(n_nodes, n_bad_electrode, replace=False)
-        elif data_type == 'clinical':
+        elif train_predict_flag == 1: # clinical
             data = np.load(parameters['data_folder_patient'] / f'{name_prefix}_clinical_data.npz', allow_pickle=True)
             map_data = {k: data[k] for k in data.files}
 

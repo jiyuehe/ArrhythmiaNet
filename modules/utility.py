@@ -22,7 +22,7 @@ try:
 except ImportError:
     ME = None
 
-def _load_npz_with_numpy2_pickle_compat(file_path, allow_pickle=True):
+def load_npz_with_numpy2_pickle_compatibility(file_path, allow_pickle=True):
     """Load npz and materialize arrays with NumPy 2.x -> 1.x pickle compatibility."""
     try:
         data = np.load(file_path, allow_pickle=allow_pickle)
@@ -55,7 +55,7 @@ def categorize_files_into_train_validation_test(data_folder_simulation):
         patient_ids = list(patient_files)
         n_patients = len(patient_ids)
 
-        # randomly split patients so every simulation for a patient stays together.
+        # randomly split patients so every simulation for a patient stays together
         perm = np.random.permutation(n_patients)
 
         n_train = int(0.8 * n_patients)
@@ -131,7 +131,7 @@ def normalize_to_unit_interval(values):
 
         return normalized.astype(np.float32)
 
-def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, parameters, data_type, train_predict_type, arrhythmia_type):
+def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, parameters, data_type, arrhythmia_type):
     data_folder_simulation = parameters['data_folder_simulation'] 
     data_folder_patient = parameters['data_folder_patient']
 
@@ -142,7 +142,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         # load electrode coordinates
         # ------------------------------
         mesh_file_name = name_prefixes[i] + '_mesh.npz'
-        mesh_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / mesh_file_name, allow_pickle=True)
+        mesh_data = load_npz_with_numpy2_pickle_compatibility(data_folder_patient / mesh_file_name, allow_pickle=True)
 
         voxel = mesh_data['voxel']
         node = voxel - np.round(voxel.mean(axis=0)).astype(int) # center the coordinates at the origin and convert to integers. shape (n_nodes, 3)
@@ -155,7 +155,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
 
         # load electrograms
         # ------------------------------
-        if data_type == 'simulation':
+        if data_type == 0: # simulation
             simulation_results = dict(np.load(data_folder_simulation / file_names[i], allow_pickle=False))
         
             x_electrode = simulation_results['electrogram_unipolar'][parameters['t_start']:parameters['t_end']:parameters['time_step'], :] # shape (t, n_node)
@@ -170,10 +170,10 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
             # electrograms on each nodes
             x = np.zeros((x_electrode.shape[0], n_nodes))
             x[:,electrode_id_on_voxel] = x_electrode
-        elif data_type == 'clinical':
+        elif data_type == 1: # clinical
             # load data
             clinical_data_file_name = name_prefixes[i] + '_catheter.npz'
-            map_data = _load_npz_with_numpy2_pickle_compat(data_folder_patient / clinical_data_file_name, allow_pickle=True)
+            map_data = load_npz_with_numpy2_pickle_compatibility(data_folder_patient / clinical_data_file_name, allow_pickle=True)
 
             # find the good electrode nodes that have good signals
             activation_time = map_data['clinical_activation_uni']
@@ -194,11 +194,11 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         
         # load target data
         # ------------------------------
-        if data_type == 'simulation' and (train_predict_type == 'train' or train_predict_type == 'predict'):
-            if arrhythmia_type == 'focal':
+        if data_type == 0: # simulation
+            if arrhythmia_type == 0:
                 y = simulation_results['lat_voxel'].astype(np.float32)
                 y = normalize_to_unit_interval(y)
-            elif arrhythmia_type == 'flutter':
+            elif arrhythmia_type == 1:
                 y = simulation_results['lat_voxel_woi'].astype(np.float32)
                 no_value_mask = ~np.isfinite(y)
                 y_normalized = normalize_to_unit_interval(y)
@@ -209,8 +209,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
                 y2 = np.where(no_value_mask, np.nan, y2)
                 y3 = no_value_mask.astype(np.float32)
                 y = np.stack((y1, y2, y3), axis=1)
-
-        elif data_type == 'clinical':
+        elif data_type == 1: # clinical
             y = np.full(n_nodes, np.nan, dtype=np.float32)
             y[good_e_id] = activation_time[good_e_id] # assign the clinical activation time to the good electrode nodes according to clinical data
 

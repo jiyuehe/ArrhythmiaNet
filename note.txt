@@ -1,0 +1,50 @@
+training time cost for 2300 focal simulations
+
+root@e362c169b088:/workspace# python3 ArrhythmiaNet/main_u_net.py
+/opt/conda/lib/python3.7/site-packages/MinkowskiEngine-0.5.4-py3.7-linux-x86_64.egg/MinkowskiEngine/__init__.py:42: UserWarning: The environment variable `OMP_NUM_THREADS` not set. MinkowskiEngine will automatically set `OMP_NUM_THREADS=16`. If you want to set `OMP_NUM_THREADS` manually, please export it on the command line before running a python script. e.g. `export OMP_NUM_THREADS=12; python your_program.py`. It is recommended to set it below 24.
+  "It is recommended to set it below 24.",
+n_train: 1840, n_validation: 340, n_test: 120
+train model
+Epoch 1
+  Training batch 1/307.          
+  GPU memory after first batch is loaded: PyTorch allocated 0.75 GiB, reserved 0.76 GiB, driver free 21.83/23.53 GiB
+
+  GPU memory after first training step: PyTorch allocated 1.90 GiB, reserved 4.13 GiB, driver free 18.18/23.53 GiB, peak allocated 2.90 GiB
+training/validation Loss: 3.8336e-3 / 2.3359e-3                              
+computation time: 2675.1 seconds
+Epoch 2
+training/validation Loss: 1.6288e-3 / 1.6258e-3                              
+computation time: 2619.4 seconds
+Epoch 3
+    no improvement for 1 epoch(s) (min val loss: 1.6258e-3).                  
+training/validation Loss: 1.5052e-3 / 1.7023e-3                              
+computation time: 2624.8 seconds
+Epoch 4
+    no improvement for 2 epoch(s) (min val loss: 1.6258e-3).                  
+training/validation Loss: 1.3861e-3 / 2.9034e-3                              
+computation time: 2625.3 seconds
+Epoch 5
+training/validation Loss: 1.2630e-3 / 1.2622e-3                              
+computation time: 2623.8 seconds
+Epoch 6
+    no improvement for 1 epoch(s) (min val loss: 1.2622e-3).                  
+training/validation Loss: 1.2352e-3 / 1.7505e-3                              
+computation time: 2621.9 seconds
+Epoch 7
+    no improvement for 2 epoch(s) (min val loss: 1.2622e-3).                  
+training/validation Loss: 1.2412e-3 / 3.4882e-3                              
+computation time: 2622.3 seconds
+Epoch 8
+    no improvement for 3 epoch(s) (min val loss: 1.2622e-3).                  
+training/validation Loss: 1.1339e-3 / 5.8568e-3                              
+computation time: 2620.4 seconds
+Epoch 9
+    no improvement for 4 epoch(s) (min val loss: 1.2622e-3).                  
+training/validation Loss: 1.1623e-3 / 4.1641e-3                              
+computation time: 2624.1 seconds
+Epoch 10
+    no improvement for 5 epoch(s) (min val loss: 1.2622e-3).                  
+training/validation Loss: 0.8324e-3 / 1.3532e-3                              
+computation time: 2615.8 seconds
+Epoch 11
+  Training batch 54/307.          
