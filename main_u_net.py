@@ -25,9 +25,9 @@ torch.cuda.empty_cache() # release unused cached CUDA memory
 
 #%%
 # settings
-train_predict_flag = 0 # 1: train; 0: predict
+train_predict_flag = 1 # 1: train; 0: predict
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
-arrhythmia_flag = 0 # 0: focal; 1: flutter
+arrhythmia_flag = 1 # 0: focal; 1: flutter
 continue_training_flag = 0 # 0: train from scratch; 1: load best_unet_model.pth and continue training
 
 parameters = {}
