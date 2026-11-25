@@ -134,6 +134,7 @@ def normalize_to_unit_interval(values):
 def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, parameters, data_type, arrhythmia_flag):
     data_folder_simulation = parameters['data_folder_simulation'] 
     data_folder_patient = parameters['data_folder_patient']
+    data_folder_mesh = parameters['data_folder_mesh']
 
     x_temp = [] # input. electrograms of all voxels
     nodes_temp = [] # input. xyz coordinates of the x_temp
@@ -142,7 +143,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         # load electrode coordinates
         # ------------------------------
         mesh_file_name = name_prefixes[i] + '_mesh.npz'
-        mesh_data = load_npz_with_numpy2_pickle_compatibility(data_folder_patient / mesh_file_name, allow_pickle=True)
+        mesh_data = load_npz_with_numpy2_pickle_compatibility(data_folder_mesh / mesh_file_name, allow_pickle=True)
 
         voxel = mesh_data['voxel']
         node = voxel - np.round(voxel.mean(axis=0)).astype(int) # center the coordinates at the origin and convert to integers. shape (n_nodes, 3)

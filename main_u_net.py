@@ -37,18 +37,19 @@ parameters['epochs'] = 30 # maximum training epochs. may stop earlier with early
 parameters['early_stopping_patience'] = 10 # stop training if no improvement for this many epochs
 if arrhythmia_flag == 0:
    parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/one_focal')
-   parameters['result_folder'] = script_dir / 'result' / 'focal'
+   parameters['result_folder'] = Path(script_dir) / 'result' / 'focal'
    parameters['t_start'] = 0
    parameters['time_step'] = 1
    parameters['n_timepoints'] = 500
    parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
 if arrhythmia_flag == 1:
    parameters['data_folder_simulation'] = Path('/home/j/Desktop/hdd/share_folder/simulation_results/flutter')
-   parameters['result_folder'] = script_dir / 'result' / 'flutter'
+   parameters['result_folder'] = Path(script_dir) / 'result' / 'flutter'
    parameters['t_start'] = 500
    parameters['time_step'] = 1
    parameters['n_timepoints'] = 500
    parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
+parameters['data_folder_mesh'] = Path('/home/j/Desktop/ssd/carto3_data/processed')
 parameters['data_folder_patient'] = Path('/home/j/Documents/box/carto3_files/data_npz/adjudicated')
 parameters['result_folder'].mkdir(exist_ok=True)
 
@@ -78,7 +79,7 @@ try:
       # out_channels is 3 for of phase map: sin(phase), cos(phase), a mask for non-conductive region due to pulmonary vein isolation
 
    print(f'model created with {sum(p.numel() for p in parameters["model"].parameters())} parameters')
-   print(parameters['model']) # use print to show model architecture
+   # print(parameters['model']) # use print to show model architecture
 except ImportError:
    print('MinkowskiEngine is not installed.')
 

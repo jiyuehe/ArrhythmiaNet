@@ -69,7 +69,7 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
         elif train_predict_flag == 1: # clinical
             name_prefix = file_names_test[sample_id].split('_clinical_data')[0]
 
-        mesh_data = np.load(parameters['data_folder_patient'] / f'{name_prefix}_mesh.npz', allow_pickle=True)
+        mesh_data = np.load(parameters['data_folder_mesh'] / f'{name_prefix}_mesh.npz', allow_pickle=True)
         node = mesh_data['voxel']
         node = node - np.round(node.mean(axis=0)).astype(int) # shape (n_nodes, 3)
         n_nodes = node.shape[0]
