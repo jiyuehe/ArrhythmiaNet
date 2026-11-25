@@ -92,7 +92,7 @@ if train_predict_flag == 1:
       parameters['model'].load_state_dict(torch.load(model_path, map_location=parameters['device']))
 
    # train the model
-   train_loss_history, val_loss_history = modules.train_predict.train_model(parameters, arrhythmia_flag)
+   modules.train_predict.train_model(parameters, arrhythmia_flag)
 
    # plot loss history
    modules.result_analysis.plot_loss_history(parameters['result_folder'])

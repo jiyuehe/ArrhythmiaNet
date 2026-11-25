@@ -90,11 +90,11 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
             good_e_id = [i for i, x in enumerate(act) if x != 0]
             non_e_id = np.setdiff1d(np.arange(n_nodes), good_e_id)
 
-        if arrhythmia_flag == 0:
+        if arrhythmia_flag == 0: # focal
             data_truth = truth_data[sample_id].flatten()
             data_predicted = predicted_data[sample_id].flatten()
             color_tpye = 'red-blue'
-        if arrhythmia_flag == 1:
+        if arrhythmia_flag == 1: # flutter
             truth_channels = truth_data[sample_id]
             predicted_channels = predicted_data[sample_id]
             if hasattr(truth_channels, 'detach'):

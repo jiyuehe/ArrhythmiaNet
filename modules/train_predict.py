@@ -84,7 +84,6 @@ def train_model(parameters, arrhythmia_flag):
         # shuffle training indices at the start of each epoch
         perm = np.random.permutation(n_train_samples)
         file_names_train = np.array(parameters['file_names_train'])[perm]
-
         name_prefixes = [file_name.split('_simulation_results_')[0] for file_name in file_names_train] # extract name prefixes for loading clinical data
         
         # training phase
@@ -108,7 +107,7 @@ def train_model(parameters, arrhythmia_flag):
             if not memory_reported and device.type == 'cuda':
                 torch.cuda.reset_peak_memory_stats(device)
 
-            neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_train, name_prefixes, parameters, 0, arrhythmia_flag)
+            neural_network_input, neural_network_target = utility.load_input_and_target(start_idx, end_idx, file_names_train, name_prefixes, parameters, 0, arrhythmia_flag)
 
             if not memory_reported:
                 print_cuda_memory('after first batch is loaded', device)
@@ -121,7 +120,7 @@ def train_model(parameters, arrhythmia_flag):
             # In PyTorch, when you define a model as a subclass of nn.Module, the class implements a special Python method called __call__(). __call__() (defined in nn.Module) -> calls model.forward(). Therefore model(input_data) calls model.forward(input_data).
             
             # calculate loss
-            loss = criterion(outputs, target_sparse)
+            loss = criterion(outputs, neural_network_target)
             
             # backward pass: Compute gradients via backpropagation
             loss.backward()
@@ -148,7 +147,6 @@ def train_model(parameters, arrhythmia_flag):
         # shuffle validation indices at the start of each epoch
         perm = np.random.permutation(n_validation_samples)
         file_names_validation = np.array(parameters['file_names_validation'])[perm]
-
         name_prefixes = [file_name.split('_simulation_results_')[0] for file_name in file_names_validation] # extract name prefixes for loading clinical data
 
         with torch.no_grad(): # disables gradient computation
@@ -162,13 +160,13 @@ def train_model(parameters, arrhythmia_flag):
                 start_idx = batch_idx * parameters['batch_size']
                 end_idx = min((batch_idx + 1) * parameters['batch_size'], n_validation_samples)
 
-                neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_validation, name_prefixes, parameters, 0, arrhythmia_flag)
+                neural_network_input, neural_network_target = utility.load_input_and_target(start_idx, end_idx, file_names_validation, name_prefixes, parameters, 0, arrhythmia_flag)
                 
                 # forward pass (no gradient tracking)
                 outputs = parameters['model'](neural_network_input)
 
                 # calculate loss
-                loss = criterion(outputs, target_sparse)
+                loss = criterion(outputs, neural_network_target)
                     
                 # accumulate loss
                 val_loss += loss.item()
@@ -201,7 +199,6 @@ def train_model(parameters, arrhythmia_flag):
 
             best_loss = val_loss
             torch.save(parameters['model'].state_dict(), parameters['result_folder'] / 'best_unet_model.pth') # save best model
-
         elif val_loss >= best_loss:
             epochs_without_improvement += 1
             print(f'\033[K    no improvement for {epochs_without_improvement} epoch(s). min val loss: {best_loss*1000:.3f}e-3.')
@@ -216,8 +213,6 @@ def train_model(parameters, arrhythmia_flag):
         print(f"training/validation Loss: {train_loss*1000:.3f}e-3 / {val_loss*1000:.3f}e-3                              ")
         print(f"computation time: {epoch_duration:.1f} seconds")
 
-    return train_loss_history, val_loss_history
-
 def predict(parameters, file_names_test, testing_data_flag, arrhythmia_flag):
     if arrhythmia_flag == 0:
         n_out_channel = 1
@@ -229,8 +224,8 @@ def predict(parameters, file_names_test, testing_data_flag, arrhythmia_flag):
     n_test_samples = len(file_names_test)
     n_test_batches = (n_test_samples + parameters['batch_size'] - 1) // parameters['batch_size']
 
-    all_predictions = []
-    all_truths = []
+    predictions = [] # (n_out_channel, n_nodes of n_batch of atria)
+    truths = [] # (n_out_channel, n_nodes of n_batch of atria)
     with torch.no_grad():
         for batch_idx in range(n_test_batches):
             print(f'\r\033[K  Prediction batch {batch_idx+1}/{n_test_batches}.', end='', flush=True)
@@ -244,16 +239,14 @@ def predict(parameters, file_names_test, testing_data_flag, arrhythmia_flag):
             elif testing_data_flag == 1: # clinical data
                 name_prefixes = [file_name.split('_carto_catheter.npz')[0] for file_name in file_names_test] # extract name prefixes
 
-            neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_test, name_prefixes, parameters, testing_data_flag, arrhythmia_flag)
+            neural_network_input, neural_network_target = utility.load_input_and_target(start_idx, end_idx, file_names_test, name_prefixes, parameters, testing_data_flag, arrhythmia_flag)
 
             # forward pass
             outputs = parameters['model'](neural_network_input)
 
-            current_batch_size = end_idx - start_idx
-
             # get coordinates from the sparse tensor output: shape (batch * n_nodes, 4) — [batch_idx, x, y, z]
             coords = outputs.C.cpu()
-            target_coords = target_sparse.C.cpu()
+            target_coords = neural_network_target.C.cpu()
 
             # compute min coordinate for dense conversion (required if any coordinate is negative)
             min_coord = coords[:, 1:].min(dim=0).values # shape: (3,)
@@ -262,6 +255,7 @@ def predict(parameters, file_names_test, testing_data_flag, arrhythmia_flag):
             dense = outputs.dense(min_coordinate=min_coord)
             prediction_dense = dense[0].cpu() # shape: (batch, n_out_channel, X, Y, Z)
 
+            current_batch_size = end_idx - start_idx
             for b in range(current_batch_size):
                 # get spatial coords for this sample
                 id = coords[:, 0] == b
@@ -272,15 +266,11 @@ def predict(parameters, file_names_test, testing_data_flag, arrhythmia_flag):
                 pred_b = np.zeros((n_out_channel, n_nodes_b), dtype=np.float32)
                 for n, (x, y, z) in enumerate(sample_coords):
                     pred_b[:, n] = prediction_dense[b, :, x, y, z]
-                all_predictions.append(pred_b) # shape: (n_out_channel, n_nodes_b)
+                predictions.append(pred_b) # shape: (n_out_channel, n_nodes_b)
 
                 # extract truth features for this sample
                 id = target_coords[:, 0] == b
-                truth_b = target_sparse.F.cpu()[id, :].T  # shape: (n_out_channel, n_nodes_b)
-                all_truths.append(truth_b)
-
-        # return as lists since n_nodes may differ per sample
-        predictions = all_predictions # list of (n_out_channel, n_nodes_all_samples) arrays
-        truths = all_truths # list of (n_out_channel, n_nodes_all_samples) tensors
+                truth_b = neural_network_target.F.cpu()[id, :].T  # shape: (n_out_channel, n_nodes_b)
+                truths.append(truth_b)
 
     return predictions, truths

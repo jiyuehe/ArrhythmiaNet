@@ -135,9 +135,9 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
     data_folder_simulation = parameters['data_folder_simulation'] 
     data_folder_patient = parameters['data_folder_patient']
 
-    x_temp = []
-    y_temp = []
-    nodes_list = []
+    x_temp = [] # input. electrograms of all voxels
+    nodes_temp = [] # input. xyz coordinates of the x_temp
+    y_temp = [] # target
     for i in range(start_idx, end_idx):
         # load electrode coordinates
         # ------------------------------
@@ -151,7 +151,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         b = i - start_idx # batch index, 1 batch corresponds to 1 simulation on 1 geometry
         batch_indices = torch.full((n_nodes, 1), b, dtype=torch.int32)
         temp = torch.cat([batch_indices, torch.from_numpy(node).int()], dim=1) # shape (n_nodes, 4) = [batch_indices | x | y | z]
-        nodes_list.append(temp)
+        nodes_temp.append(temp)
 
         # load electrograms
         # ------------------------------
@@ -160,14 +160,13 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         
             x_electrode = simulation_results['electrogram_unipolar'][parameters['t_start']:parameters['t_end']:parameters['time_step'], :] # shape (t, n_node)
             x_electrode = normalize_to_unit_interval(x_electrode)
-            # NOTE: x contains simulated electrograms for every node
 
             # none electrode voxel ids
             all_voxel_ids = np.arange(0,n_nodes)
             electrode_id_on_voxel = simulation_results['electrode_id_on_voxel']
             non_e_id = np.setdiff1d(all_voxel_ids, electrode_id_on_voxel)
 
-            # electrograms on each nodes
+            # electrograms on all nodes
             x = np.zeros((x_electrode.shape[0], n_nodes))
             x[:,electrode_id_on_voxel] = x_electrode
         elif data_type == 1: # clinical
@@ -195,10 +194,10 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         # load target data
         # ------------------------------
         if data_type == 0: # simulation
-            if arrhythmia_flag == 0:
+            if arrhythmia_flag == 0: # focal
                 y = simulation_results['lat_voxel'].astype(np.float32)
                 y = normalize_to_unit_interval(y)
-            elif arrhythmia_flag == 1:
+            elif arrhythmia_flag == 1: # flutter
                 y = simulation_results['lat_voxel_woi'].astype(np.float32)
                 no_value_mask = ~np.isfinite(y)
                 y_normalized = normalize_to_unit_interval(y)
@@ -214,53 +213,10 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
             y[good_e_id] = activation_time[good_e_id] # assign the clinical activation time to the good electrode nodes according to clinical data
 
         y_temp.append(y)
-
-        debug_plot = 0
-        if debug_plot == 1: 
-            import matplotlib.pyplot as plt
-            plot_folder = parameters['result_folder']
-
-            def plot_map(node, val):
-                plt.figure()
-                ax = plt.axes(projection='3d')
-                ax.scatter(node[:, 0], node[:, 1], node[:, 2], c=val, marker='.', s=30, cmap='jet_r')
-
-                # force equal scale across x/y/z so geometry is not distorted.
-                x_mid = 0.5 * (node[:, 0].max() + node[:, 0].min())
-                y_mid = 0.5 * (node[:, 1].max() + node[:, 1].min())
-                z_mid = 0.5 * (node[:, 2].max() + node[:, 2].min())
-                max_radius = 0.5 * max(
-                    node[:, 0].max() - node[:, 0].min(),
-                    node[:, 1].max() - node[:, 1].min(),
-                    node[:, 2].max() - node[:, 2].min(),
-                )
-                ax.set_xlim(x_mid - max_radius, x_mid + max_radius)
-                ax.set_ylim(y_mid - max_radius, y_mid + max_radius)
-                ax.set_zlim(z_mid - max_radius, z_mid + max_radius)
-
-                ax.view_init(elev=70, azim=-70)
-                plt.axis('off')
-                plt.tight_layout()
-
-                return plt
-
-            # plot activation time map using y as activation times
-            plt = plot_map(node, y)
-            plt.savefig(plot_folder / f'map.png')
-            plt.close()
-
-            # plot activation time map using x to find the activation times
-            negative_dvdt = -np.diff(x[:-1, :], axis=0) # shape (t-1, n_node)
-            activation_time_estimated = np.argmax(negative_dvdt, axis=0).astype(np.float32) # shape (n_node,)
-            activation_time_estimated[activation_time_estimated == 0] = np.nan # set activation time of nodes without activation to nan
-
-            plt = plot_map(node, activation_time_estimated)
-            plt.savefig(plot_folder / f'activation_time_map_estimated.png')
-            plt.close()
             
-    nodes_batch = torch.cat(nodes_list, dim=0).to(parameters['device'])  # (batch * n_nodes, 4)
+    nodes_batch = torch.cat(nodes_temp, dim=0).to(parameters['device'])  # (batch * n_nodes, 4) = [batch_indices | x | y | z]
 
-    # build feats_batch: (batch * n_nodes, t) — handles variable n_nodes per sample
+    # build feats_batch: (batch * n_nodes, t)
     feats_list = [torch.from_numpy(x).float().T for x in x_temp]  # each: (n_nodes, t)
     feats_batch = torch.cat(feats_list, dim=0).to(parameters['device'])
 
@@ -273,6 +229,6 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
 
     # create MinkowskiEngine sparse tensor
     neural_network_input = ME.SparseTensor(features=feats_batch, coordinates=nodes_batch, device=parameters['device'])
-    target_sparse = ME.SparseTensor(features=targets_batch, coordinates=nodes_batch, device=parameters['device'])
+    neural_network_target = ME.SparseTensor(features=targets_batch, coordinates=nodes_batch, device=parameters['device'])
 
-    return neural_network_input, target_sparse
+    return neural_network_input, neural_network_target
