@@ -51,7 +51,7 @@ def mse_loss(predictions, targets):
 
     return loss
 
-def train_model(parameters, arrhythmia_type):
+def train_model(parameters, arrhythmia_flag):
     # assign the loss function
     criterion = mse_loss
 
@@ -107,7 +107,7 @@ def train_model(parameters, arrhythmia_type):
             if not memory_reported and device.type == 'cuda':
                 torch.cuda.reset_peak_memory_stats(device)
 
-            neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_train, name_prefixes, parameters, 0, arrhythmia_type)
+            neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_train, name_prefixes, parameters, 0, arrhythmia_flag)
 
             if not memory_reported:
                 _print_cuda_memory('after first batch is loaded', device)
@@ -161,7 +161,7 @@ def train_model(parameters, arrhythmia_type):
                 start_idx = batch_idx * parameters['batch_size']
                 end_idx = min((batch_idx + 1) * parameters['batch_size'], n_validation_samples)
 
-                neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_validation, name_prefixes, parameters, 0, arrhythmia_type)
+                neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_validation, name_prefixes, parameters, 0, arrhythmia_flag)
                 
                 # forward pass (no gradient tracking)
                 outputs = parameters['model'](neural_network_input)
@@ -217,10 +217,10 @@ def train_model(parameters, arrhythmia_type):
 
     return train_loss_history, val_loss_history
 
-def predict(parameters, file_names_test, testing_data_flag, arrhythmia_type):
-    if arrhythmia_type == 0:
+def predict(parameters, file_names_test, testing_data_flag, arrhythmia_flag):
+    if arrhythmia_flag == 0:
         n_out_channel = 1
-    elif arrhythmia_type == 1:
+    elif arrhythmia_flag == 1:
         n_out_channel = 3
 
     parameters['model'].eval()
@@ -243,7 +243,7 @@ def predict(parameters, file_names_test, testing_data_flag, arrhythmia_type):
             elif testing_data_flag == 1: # clinical data
                 name_prefixes = [file_name.split('_carto_catheter.npz')[0] for file_name in file_names_test] # extract name prefixes
 
-            neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_test, name_prefixes, parameters, 1, arrhythmia_type)
+            neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_test, name_prefixes, parameters, 1, arrhythmia_flag)
 
             # forward pass
             outputs = parameters['model'](neural_network_input)

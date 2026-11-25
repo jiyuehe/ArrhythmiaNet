@@ -64,7 +64,7 @@ def voxelize_nodes(node):
 
     return voxels, grid_indices
 
-def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, train_predict_flag, arrhythmia_type):
+def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, train_predict_flag, arrhythmia_flag):
     n_samples = len(predicted_data)
 
     for sample_id in np.arange(n_samples):
@@ -97,11 +97,11 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
             good_e_id = [i for i, x in enumerate(act) if x != 0]
             non_e_id = np.setdiff1d(np.arange(n_nodes), good_e_id)
 
-        if arrhythmia_type == 'focal':
+        if arrhythmia_flag == 0:
             data_truth = truth_data[sample_id].flatten()
             data_predicted = predicted_data[sample_id].flatten()
             color_tpye = 'red-blue'
-        if arrhythmia_type == 'flutter':
+        if arrhythmia_flag == 1:
             truth_channels = truth_data[sample_id]
             predicted_channels = predicted_data[sample_id]
             if hasattr(truth_channels, 'detach'):

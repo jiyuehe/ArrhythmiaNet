@@ -131,7 +131,7 @@ def normalize_to_unit_interval(values):
 
         return normalized.astype(np.float32)
 
-def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, parameters, data_type, arrhythmia_type):
+def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, parameters, data_type, arrhythmia_flag):
     data_folder_simulation = parameters['data_folder_simulation'] 
     data_folder_patient = parameters['data_folder_patient']
 
@@ -195,10 +195,10 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
         # load target data
         # ------------------------------
         if data_type == 0: # simulation
-            if arrhythmia_type == 0:
+            if arrhythmia_flag == 0:
                 y = simulation_results['lat_voxel'].astype(np.float32)
                 y = normalize_to_unit_interval(y)
-            elif arrhythmia_type == 1:
+            elif arrhythmia_flag == 1:
                 y = simulation_results['lat_voxel_woi'].astype(np.float32)
                 no_value_mask = ~np.isfinite(y)
                 y_normalized = normalize_to_unit_interval(y)
