@@ -28,9 +28,10 @@ torch.cuda.empty_cache() # release unused cached CUDA memory
 
 #%%
 # mode settings
-train_predict_flag = 1 # 1: train; 0: predict
+train_predict_flag = 0 # 1: train; 0: predict
 testing_data_flag = 0 # 0: simulation data; 1: clinical data
 arrhythmia_type = 'focal' # focal, flutter
+continue_training = 0 # 0: train from scratch; 1: load best_unet_model.pth and continue training
 
 parameters = {}
 if arrhythmia_type == 'focal':
@@ -102,7 +103,6 @@ if debug_flag == 1:
 if train_predict_flag == 1:
    print('train model')
 
-   continue_training = 0 # 0: train from scratch; 1: load best_unet_model.pth and continue training
    if continue_training == 1: # load pre-trained model to continue training
       model_path = parameters['result_folder'] / 'best_unet_model.pth'
       print(f'loading pre-trained model from {model_path}')
@@ -131,9 +131,8 @@ if train_predict_flag == 0:
       predicted_data, truth_data = modules.train_predict.predict(parameters, file_names_test, 'simulation', arrhythmia_type)
    elif testing_data_flag == 1:
       file_names_test = [
-         '99_2-LaFAM_cartofinder_data_clinical_data.npz',
-         '100_1-LA FAM1_clinical_data.npz',
-         '101_1-lagood_clinical_data.npz',
+         '10_2-LA FAM_carto_catheter.npz',
+         '60_2-LA_ACTIVATION_carto_catheter.npz',
       ]
 
       predicted_data, truth_data = modules.train_predict.predict(parameters, file_names_test, 'clinical', arrhythmia_type)
