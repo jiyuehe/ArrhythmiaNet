@@ -104,11 +104,10 @@ if train_predict_flag == 0:
    parameters['model'].load_state_dict(torch.load(parameters['result_folder'] / 'best_unet_model.pth', map_location=parameters['device'])) # load the best model
 
    if testing_data_flag == 0: # simulation
-      # uniformly sample N files
+      N = 10
       file_names_test = np.array(parameters['file_names_test'])
-      N = len(file_names_test) # give a number, or use len(file_names_test)
-      if len(file_names_test) > N:
-         indices = np.linspace(0, len(file_names_test) - 1, N, dtype=int)
+      if N < len(file_names_test):
+         indices = np.linspace(0, len(file_names_test) - 1, N, dtype=int) # uniformly sample N files
          file_names_test = file_names_test[indices]
    elif testing_data_flag == 1: # clinical
       file_names_test = [

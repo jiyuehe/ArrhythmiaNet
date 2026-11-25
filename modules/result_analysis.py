@@ -13,22 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import math
-import os
 import sys
 from pathlib import Path
-script_dir = os.path.dirname(os.path.abspath(__file__)) # get the path of the current script
-os.chdir(script_dir) # change the working directory
-script_dir = Path(script_dir)
-
 from platform import node
 import matplotlib.pyplot as plt 
 import numpy as np
-import plotly.graph_objects as go
 
 COMMON_DIR = Path('/home/j/Documents/box/codes/common')
 sys.path.insert(0, str(COMMON_DIR))
 import common
+
+# def voxelize_nodes(node):
+#     min_coords = np.floor(node.min(axis=0)).astype(int) # node.min(axis=0) returns a 1D array containing the minimum x, y, and z values across all points
+#     max_coords = np.ceil(node.max(axis=0)).astype(int) # node.max(axis=0) returns a 1D array containing the maximum x, y, and z values across all points
+#     grid_shape = max_coords - min_coords + 1
+#     grid_indices = (node - min_coords).astype(int)
+    
+#     voxels = np.zeros(grid_shape, dtype=bool)
+#     voxels[grid_indices[:,0], grid_indices[:,1], grid_indices[:,2]] = True
+
+#     return voxels, grid_indices
 
 def plot_loss_history(result_folder):
     loss_history_path = result_folder / 'loss_history.txt'
@@ -52,17 +56,6 @@ def plot_loss_history(result_folder):
     plt.grid(True)
     plt.savefig(result_folder / 'loss_history.png', dpi=100, bbox_inches="tight", pad_inches=0)
     plt.close()
-
-def voxelize_nodes(node):
-    min_coords = np.floor(node.min(axis=0)).astype(int) # node.min(axis=0) returns a 1D array containing the minimum x, y, and z values across all points
-    max_coords = np.ceil(node.max(axis=0)).astype(int) # node.max(axis=0) returns a 1D array containing the maximum x, y, and z values across all points
-    grid_shape = max_coords - min_coords + 1
-    grid_indices = (node - min_coords).astype(int)
-    
-    voxels = np.zeros(grid_shape, dtype=bool)
-    voxels[grid_indices[:,0], grid_indices[:,1], grid_indices[:,2]] = True
-
-    return voxels, grid_indices
 
 def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, parameters, train_predict_flag, arrhythmia_flag):
     n_samples = len(predicted_data)

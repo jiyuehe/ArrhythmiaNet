@@ -19,7 +19,7 @@ import numpy as np
 import time
 from . import utility
 
-def _print_cuda_memory(label, device, show_peak=False):
+def print_cuda_memory(label, device, show_peak=False):
     if device.type != 'cuda':
         return
 
@@ -39,14 +39,11 @@ def _print_cuda_memory(label, device, show_peak=False):
         message += f', peak allocated {peak_gib:.2f} GiB'
     print(f'\n{message}')
 
-
 def mse_loss(predictions, targets):
     # extract features from sparse tensors
     pred_features = predictions.F
     target_features = targets.F
-
     valid = torch.isfinite(target_features) # NaNs are not valid
-
     loss = nn.functional.mse_loss(pred_features[valid], target_features[valid])
 
     return loss
@@ -97,7 +94,11 @@ def train_model(parameters, arrhythmia_flag):
         
         # for each batch in training data
         for batch_idx in range(n_train_batches):
-            print(f'  Training batch {batch_idx+1}/{n_train_batches}.          ', end='\r') # '\r' to overwrite the same line
+            print(f'\r\033[K  Training batch {batch_idx+1}/{n_train_batches}.', end='', flush=True) 
+            # \r moves the cursor to the beginning of the line
+            # \033[K clears from the cursor to the end of the line
+            # end='' stay the same line
+            # flush=True makes the progress update appear immediately
 
             # load batch data
             start_idx = batch_idx * parameters['batch_size']
@@ -110,7 +111,7 @@ def train_model(parameters, arrhythmia_flag):
             neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_train, name_prefixes, parameters, 0, arrhythmia_flag)
 
             if not memory_reported:
-                _print_cuda_memory('after first batch is loaded', device)
+                print_cuda_memory('after first batch is loaded', device)
 
             # set gradients to zero
             optimizer.zero_grad() 
@@ -129,7 +130,7 @@ def train_model(parameters, arrhythmia_flag):
             optimizer.step()
 
             if not memory_reported:
-                _print_cuda_memory('after first training step', device, show_peak=True)
+                print_cuda_memory('after first training step', device, show_peak=True)
                 memory_reported = True
             
             # accumulate training loss
@@ -155,7 +156,7 @@ def train_model(parameters, arrhythmia_flag):
         # validation does not require gradient calculations since we are not updating model weights.
             # for each batch in validation data
             for batch_idx in range(n_validation_batches):
-                print(f'  Validation batch {batch_idx+1}/{n_validation_batches}.          ', end='\r') # '\r' to overwrite the same line
+                print(f'\r\033[K  Validation batch {batch_idx+1}/{n_validation_batches}.', end='', flush=True)
 
                 # load batch data
                 start_idx = batch_idx * parameters['batch_size']
@@ -203,16 +204,16 @@ def train_model(parameters, arrhythmia_flag):
 
         elif val_loss >= best_loss:
             epochs_without_improvement += 1
-            print(f"    no improvement for {epochs_without_improvement} epoch(s) (min val loss: {best_loss*1000:.4f}e-3).                  ")
+            print(f'\033[K    no improvement for {epochs_without_improvement} epoch(s). min val loss: {best_loss*1000:.3f}e-3.')
             
             if epochs_without_improvement >= parameters['early_stopping_patience']:
                 print(f"early stopping triggered after {epoch+1} epochs")
-                print(f"best validation loss: {best_loss*1000:.4f}e-3")
+                print(f"best validation loss: {best_loss*1000:.3f}e-3")
                 break
     
         epoch_end_time = time.time()
         epoch_duration = epoch_end_time - epoch_start_time
-        print(f"training/validation Loss: {train_loss*1000:.4f}e-3 / {val_loss*1000:.4f}e-3                              ")
+        print(f"training/validation Loss: {train_loss*1000:.3f}e-3 / {val_loss*1000:.3f}e-3                              ")
         print(f"computation time: {epoch_duration:.1f} seconds")
 
     return train_loss_history, val_loss_history
@@ -232,7 +233,7 @@ def predict(parameters, file_names_test, testing_data_flag, arrhythmia_flag):
     all_truths = []
     with torch.no_grad():
         for batch_idx in range(n_test_batches):
-            print(f'  Prediction batch {batch_idx+1}/{n_test_batches}')
+            print(f'\r\033[K  Prediction batch {batch_idx+1}/{n_test_batches}.', end='', flush=True)
 
             start_idx = batch_idx * parameters['batch_size']
             end_idx = min((batch_idx + 1) * parameters['batch_size'], n_test_samples)
@@ -243,7 +244,7 @@ def predict(parameters, file_names_test, testing_data_flag, arrhythmia_flag):
             elif testing_data_flag == 1: # clinical data
                 name_prefixes = [file_name.split('_carto_catheter.npz')[0] for file_name in file_names_test] # extract name prefixes
 
-            neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_test, name_prefixes, parameters, 1, arrhythmia_flag)
+            neural_network_input, target_sparse = utility.load_input_and_target(start_idx, end_idx, file_names_test, name_prefixes, parameters, testing_data_flag, arrhythmia_flag)
 
             # forward pass
             outputs = parameters['model'](neural_network_input)
