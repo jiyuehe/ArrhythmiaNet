@@ -65,4 +65,59 @@ Epoch 15
 training/validation Loss: 0.7403e-3 / 1.4169e-3                              
 computation time: 2620.3 seconds
 Epoch 16
-  Training batch 92/307.          
+training/validation Loss: 0.7869e-3 / 0.8133e-3                              
+computation time: 2620.4 seconds
+Epoch 17
+    no improvement for 1 epoch(s) (min val loss: 0.8133e-3).                  
+training/validation Loss: 0.7753e-3 / 1.2783e-3                              
+computation time: 2619.6 seconds
+Epoch 18
+    no improvement for 2 epoch(s) (min val loss: 0.8133e-3).                  
+training/validation Loss: 0.7266e-3 / 1.5259e-3                              
+computation time: 2616.8 seconds
+Epoch 19
+    no improvement for 3 epoch(s) (min val loss: 0.8133e-3).                  
+training/validation Loss: 0.7238e-3 / 1.3389e-3                              
+computation time: 2617.4 seconds
+Epoch 20
+    no improvement for 4 epoch(s) (min val loss: 0.8133e-3).                  
+training/validation Loss: 0.7310e-3 / 1.5461e-3                              
+computation time: 2614.4 seconds
+Epoch 21
+    no improvement for 5 epoch(s) (min val loss: 0.8133e-3).                  
+training/validation Loss: 0.5622e-3 / 0.8605e-3                              
+computation time: 2615.8 seconds
+Epoch 22
+training/validation Loss: 0.5535e-3 / 0.6119e-3                              
+computation time: 2615.8 seconds
+Epoch 23
+training/validation Loss: 0.5378e-3 / 0.6072e-3                              
+computation time: 2619.6 seconds
+Epoch 24
+    no improvement for 1 epoch(s) (min val loss: 0.6072e-3).                  
+training/validation Loss: 0.5121e-3 / 0.6675e-3                              
+computation time: 2616.9 seconds
+Epoch 25
+    no improvement for 2 epoch(s) (min val loss: 0.6072e-3).                  
+training/validation Loss: 0.5170e-3 / 0.7930e-3                              
+computation time: 2614.5 seconds
+Epoch 26
+    no improvement for 3 epoch(s) (min val loss: 0.6072e-3).                  
+training/validation Loss: 0.5140e-3 / 1.5704e-3                              
+computation time: 2616.5 seconds
+Epoch 27
+    no improvement for 4 epoch(s) (min val loss: 0.6072e-3).                  
+training/validation Loss: 0.5125e-3 / 1.2589e-3                              
+computation time: 2618.1 seconds
+Epoch 28
+training/validation Loss: 0.4102e-3 / 0.4261e-3                              
+computation time: 2621.2 seconds
+Epoch 29
+    no improvement for 1 epoch(s) (min val loss: 0.4261e-3).                  
+training/validation Loss: 0.3887e-3 / 0.4661e-3                              
+computation time: 2631.4 seconds
+Epoch 30
+    no improvement for 2 epoch(s) (min val loss: 0.4261e-3).                  
+training/validation Loss: 0.3818e-3 / 0.6020e-3                              
+computation time: 2632.3 seconds
+done
