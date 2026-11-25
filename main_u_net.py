@@ -53,10 +53,10 @@ if arrhythmia_type == 'flutter':
    parameters['result_folder'] = script_dir / 'result' / 'flutter'
 
 # training parameters
-parameters['batch_size'] = 6 # number of training samples (electrograms-activation_maps pairs of 1 simulation on 1 geometry) processed together in one pass during training
+parameters['batch_size'] = 10 # number of training samples (electrograms-activation_maps pairs of 1 simulation on 1 geometry) processed together in one pass during training
 parameters['learning_rate'] = 1e-4 # too small or too big are both bad
 parameters['epochs'] = 30 # maximum epochs (training may stop earlier with early stopping)
-parameters['early_stopping_patience'] = 6 # stop training if no improvement for this many epochs
+parameters['early_stopping_patience'] = 10 # stop training if no improvement for this many epochs
 
 parameters['data_folder_patient'] = Path('/home/j/Desktop/ssd/carto3_data/processed')
 parameters['result_folder'].mkdir(exist_ok=True)
