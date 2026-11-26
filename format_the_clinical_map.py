@@ -18,6 +18,8 @@ from pathlib import Path
 import numpy as np
 import plotly.graph_objects as go
 import modules
+from scipy.interpolate import griddata
+from scipy.spatial import QhullError
 
 #%%
 parameters = {}
@@ -213,8 +215,71 @@ for data_id in [0]: #range(len(clinical_file_paths)):
         modules.clinical_data_plots.electrode_positions_and_activation_color(voxel_points, activation_time_on_voxel, file_path, parameters)
 
     # interpolate from the valid electrode voxels to all voxels
-    
+    def interpolate_voxel_field(values):
+        valid_source_voxels = np.flatnonzero(electrode_id_on_voxel >= 0)
+        if valid_source_voxels.size == 0:
+            return values
 
+        source_values = values[valid_source_voxels]
+        source_values = np.asarray(source_values)
+        if source_values.ndim == 1:
+            finite_source = np.isfinite(source_values)
+        else:
+            finite_source = np.isfinite(source_values).all(axis=1)
+        valid_source_voxels = valid_source_voxels[finite_source]
+        if valid_source_voxels.size == 0:
+            return values
+
+        source_points = voxel_points[valid_source_voxels]
+        source_values = values[valid_source_voxels]
+
+        try:
+            linear_values = griddata(
+                source_points,
+                source_values,
+                voxel_points,
+                method='linear',
+            )
+        except (QhullError, ValueError):
+            linear_values = None
+
+        if valid_source_voxels.size < 4 or linear_values is None:
+            return griddata(
+                source_points,
+                source_values,
+                voxel_points,
+                method='nearest',
+            )
+
+        linear_values = np.asarray(linear_values)
+        if source_values.ndim == 1:
+            missing = ~np.isfinite(linear_values)
+            if np.any(missing):
+                linear_values[missing] = griddata(
+                    source_points,
+                    source_values,
+                    voxel_points[missing],
+                    method='nearest',
+                )
+        else:
+            missing = ~np.isfinite(linear_values).all(axis=1)
+            if np.any(missing):
+                linear_values[missing] = griddata(
+                    source_points,
+                    source_values,
+                    voxel_points[missing],
+                    method='nearest',
+                )
+        return linear_values
+
+    activation_time_on_voxel[:] = interpolate_voxel_field(
+        activation_time_on_voxel
+    )
+
+    debug_plot = 0
+    if debug_plot == 1:
+        # show electrode voxel colors
+        modules.clinical_data_plots.electrode_positions_and_activation_color(voxel_points, activation_time_on_voxel, file_path, parameters)
 
 #%%
 print('done')
