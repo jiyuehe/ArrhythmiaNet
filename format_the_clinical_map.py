@@ -15,8 +15,10 @@
 
 #%%
 from pathlib import Path
+import numpy as np
 import modules
 
+#%%
 parameters = {}
 parameters['data_folder_patient'] = Path('/home/j/Documents/box/carto3_files/data_npz/good')
 
@@ -42,11 +44,18 @@ for data_id in range(len(clinical_file_paths)):
     electrogram = clinical_data_original['mapping_electrogram_unipolar'][:,woi_start:woi_end,:]
 
     # activation times
-    activation_times = clinical_data_processed['mapping_electrogram_unipolar_activation_within_woi'] # (n_segment,)
-    activation_times = activation_times - woi_start
+    activation_times = np.asarray(
+        clinical_data_processed['mapping_electrogram_unipolar_activation_within_woi'].tolist()
+    ).reshape(-1) - woi_start # (total_electrodes,) 
+    activation_times = np.where(activation_times < 0, np.nan, activation_times)
 
     # electrode positions
     electrode_positions = clinical_data_processed['electrode_positions'] # (n_segment, n_electrode, 3)
+
+    n_segment, n_time, n_electrode = electrogram_qrs_subtracted.shape
+    electrogram_qrs_subtracted = electrogram_qrs_subtracted.transpose(0, 2, 1).reshape(-1, n_time) # (total_electrodes, n_time)
+    electrogram = electrogram.transpose(0, 2, 1).reshape(-1, n_time) # (total_electrodes, n_time)
+    electrode_positions = electrode_positions.reshape(-1, 3) # (total_electrodes, 3)
 
 
 
