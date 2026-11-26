@@ -81,6 +81,111 @@ for data_id in range(len(clinical_file_paths)):
 
     voxel = geometry['voxel']
 
+    # for each voxel, find an electrode only if there is electrode(s) along the "geometry's surface normal of that voxel", and find the closest such electrode if there are many.
+    n_voxel = voxel.shape[0]
+    electrode_id_on_voxel = np.full(n_voxel, -1, dtype=np.int64)
+    activation_time_on_voxel = np.full(n_voxel, np.nan, dtype=np.float32)
+    electrogram_on_voxel = np.full((n_voxel, n_time), np.nan, dtype=np.float32)
+    electrogram_qrs_subtracted_on_voxel = np.full((n_voxel, n_time), np.nan, dtype=np.float32)
+
+    # Use face normals from the refined geometry when available.  Each voxel
+    # is matched to the refined vertex stored in vertex_id_of_voxel.
+    voxel_normals = np.full((n_voxel, 3), np.nan, dtype=np.float64)
+    # if 'vertex' in geometry and 'face' in geometry and 'vertex_id_of_voxel' in geometry:
+    vertex = np.asarray(geometry['vertex'], dtype=np.float64)
+    face = np.asarray(geometry['face'], dtype=np.int64)
+    vertex_id_of_voxel = np.asarray(geometry['vertex_id_of_voxel'], dtype=np.int64)
+
+    face_vertices = vertex[face]
+    face_normals = np.cross(
+        face_vertices[:, 1] - face_vertices[:, 0],
+        face_vertices[:, 2] - face_vertices[:, 0],
+    )
+
+    vertex_normals = np.zeros_like(vertex)
+    np.add.at(vertex_normals, face[:, 0], face_normals)
+    np.add.at(vertex_normals, face[:, 1], face_normals)
+    np.add.at(vertex_normals, face[:, 2], face_normals)
+
+    normal_lengths = np.linalg.norm(vertex_normals, axis=1)
+    valid_normals = normal_lengths > 0
+    vertex_normals[valid_normals] /= normal_lengths[valid_normals, None]
+
+    valid_voxel_vertices = (
+        (vertex_id_of_voxel >= 0)
+        & (vertex_id_of_voxel < vertex.shape[0])
+    )
+    voxel_normals[valid_voxel_vertices] = (
+        vertex_normals[vertex_id_of_voxel[valid_voxel_vertices]]
+    )
+    # else:
+    #     # For meshes without a face table, infer outward normals from missing
+    #     # axis-aligned neighbours in the voxel grid.
+    #     occupied = {tuple(point) for point in voxel.tolist()}
+    #     axes = np.eye(3, dtype=np.float64)
+    #     for voxel_id, point in enumerate(voxel):
+    #         normal = np.zeros(3, dtype=np.float64)
+    #         for axis_id in range(3):
+    #             for direction in (-1, 1):
+    #                 neighbour = tuple(point + direction * axes[axis_id].astype(np.int64))
+    #                 if neighbour not in occupied:
+    #                     normal[axis_id] += direction
+    #         normal_length = np.linalg.norm(normal)
+    #         if normal_length > 0:
+    #             voxel_normals[voxel_id] = normal / normal_length
+
+    voxel_points = np.asarray(
+        [voxel[id] for id in range(n_voxel)],
+        dtype=np.float64,
+    )
+    # if 'vertex' in geometry and 'vertex_id_of_voxel' in geometry:
+    vertex = np.asarray(geometry['vertex'], dtype=np.float64)
+    vertex_id_of_voxel = np.asarray(geometry['vertex_id_of_voxel'], dtype=np.int64)
+    valid_voxel_vertices = (
+        (vertex_id_of_voxel >= 0)
+        & (vertex_id_of_voxel < vertex.shape[0])
+    )
+    voxel_points[valid_voxel_vertices] = (
+        vertex[vertex_id_of_voxel[valid_voxel_vertices]]
+    )
+
+    spacing = float(np.asarray(geometry.get('Delta', 1.0)).reshape(-1)[0])
+    ray_tolerance = max(spacing, 1.0)
+    electrode_positions = np.asarray(electrode_positions, dtype=np.float64)
+
+    for voxel_id, (point, normal) in enumerate(zip(voxel_points, voxel_normals)):
+        if not np.isfinite(normal).all():
+            continue
+
+        normal_length = np.linalg.norm(normal)
+        if normal_length == 0:
+            continue
+        normal = normal / normal_length
+
+        displacement = electrode_positions - point
+        longitudinal = displacement @ normal
+        perpendicular = np.linalg.norm(
+            displacement - longitudinal[:, None] * normal[None, :],
+            axis=1,
+        )
+
+        candidate_ids = np.flatnonzero(
+            (longitudinal >= 0)
+            & (perpendicular <= ray_tolerance)
+        )
+        if candidate_ids.size == 0:
+            continue
+
+        closest_id = candidate_ids[
+            np.argmin(perpendicular[candidate_ids] ** 2 + longitudinal[candidate_ids] ** 2)
+        ]
+        electrode_id_on_voxel[voxel_id] = closest_id
+        activation_time_on_voxel[voxel_id] = activation_times[closest_id]
+        electrogram_on_voxel[voxel_id] = electrogram[closest_id]
+        electrogram_qrs_subtracted_on_voxel[voxel_id] = (
+            electrogram_qrs_subtracted[closest_id]
+        )
+
 
 #%%
 print('done')
