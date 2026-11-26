@@ -218,3 +218,98 @@ def electrode_positions_and_activation_color(electrode_positions, activation_tim
         height=900,
     )
 
+def electrode_voxel_mapping(electrode_id_on_voxel, voxel_points, electrode_positions, parameters, file_path):
+    # show electrodes in gray, the associated voxels in black, and draw a line linking the electrode-voxel pairs
+    paired_voxel_ids = np.flatnonzero(electrode_id_on_voxel >= 0)
+    paired_electrode_ids = electrode_id_on_voxel[paired_voxel_ids]
+
+    valid_pairs = (
+        np.isfinite(voxel_points[paired_voxel_ids]).all(axis=1)
+        & np.isfinite(electrode_positions[paired_electrode_ids]).all(axis=1)
+    )
+    paired_voxel_ids = paired_voxel_ids[valid_pairs]
+    paired_electrode_ids = paired_electrode_ids[valid_pairs]
+
+    voxel_pair_points = voxel_points[paired_voxel_ids]
+    electrode_pair_points = electrode_positions[paired_electrode_ids]
+
+    mapping_fig = go.Figure()
+
+    valid_electrodes = np.isfinite(electrode_positions).all(axis=1)
+    mapping_fig.add_trace(
+        go.Scatter3d(
+            x=electrode_positions[valid_electrodes, 0],
+            y=electrode_positions[valid_electrodes, 1],
+            z=electrode_positions[valid_electrodes, 2],
+            mode='markers',
+            name='Electrodes',
+            marker={'size': 3, 'color': 'lightgray'},
+            text=[f'Electrode {electrode_id}' for electrode_id in np.flatnonzero(valid_electrodes)],
+            hovertemplate='%{text}<extra></extra>',
+        )
+    )
+
+    if paired_voxel_ids.size:
+        mapping_fig.add_trace(
+            go.Scatter3d(
+                x=voxel_pair_points[:, 0],
+                y=voxel_pair_points[:, 1],
+                z=voxel_pair_points[:, 2],
+                mode='markers',
+                name='Associated voxels',
+                marker={'size': 3, 'color': 'black'},
+                text=[
+                    f'Voxel {voxel_id}<br>Electrode {electrode_id}'
+                    for voxel_id, electrode_id in zip(
+                        paired_voxel_ids,
+                        paired_electrode_ids,
+                    )
+                ],
+                hovertemplate='%{text}<extra></extra>',
+            )
+        )
+
+        line_x = []
+        line_y = []
+        line_z = []
+        for electrode_point, voxel_point in zip(
+            electrode_pair_points,
+            voxel_pair_points,
+        ):
+            line_x.extend([electrode_point[0], voxel_point[0], None])
+            line_y.extend([electrode_point[1], voxel_point[1], None])
+            line_z.extend([electrode_point[2], voxel_point[2], None])
+
+        mapping_fig.add_trace(
+            go.Scatter3d(
+                x=line_x,
+                y=line_y,
+                z=line_z,
+                mode='lines',
+                name='Electrode-voxel links',
+                line={'color': 'steelblue', 'width': 2},
+                hoverinfo='skip',
+            )
+        )
+
+    mapping_fig.update_layout(
+        title=f'{file_path.name}: electrode-voxel mapping',
+        scene={
+            'xaxis_title': 'X',
+            'yaxis_title': 'Y',
+            'zaxis_title': 'Z',
+            'aspectmode': 'data',
+        },
+        template='plotly_white',
+    )
+
+    parameters['result'].mkdir(parents=True, exist_ok=True)
+    figure_stem = file_path.stem.replace('_carto_catheter_processed', '')
+    mapping_fig.write_html(
+        parameters['result'] / f'{figure_stem}_electrode_voxel_mapping.html'
+    )
+    mapping_fig.write_image(
+        parameters['result'] / f'{figure_stem}_electrode_voxel_mapping.png',
+        width=1200,
+        height=900,
+    )
