@@ -50,7 +50,7 @@ if arrhythmia_flag == 1:
    parameters['n_timepoints'] = 500
    parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
 parameters['data_folder_mesh'] = Path('/home/j/Desktop/ssd/carto3_data/processed')
-parameters['data_folder_patient'] = Path('/home/j/Documents/box/carto3_files/data_npz/adjudicated')
+parameters['data_folder_patient'] = Path('/home/j/Documents/box/carto3_files/data_npz/good')
 parameters['result_folder'].mkdir(exist_ok=True)
 
 #%%
