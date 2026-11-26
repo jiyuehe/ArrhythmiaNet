@@ -19,6 +19,11 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import modules
+import sys
+
+COMMON_DIR = Path('/home/j/Documents/box/codes/common')
+sys.path.insert(0, str(COMMON_DIR))
+import common
 
 #%%
 parameters = {}
@@ -152,6 +157,21 @@ for data_id in range(len(clinical_file_paths)):
             activation_values = activation_times[valid_activation]
             data_min = activation_values.min()
             data_max = activation_values.max()
+            color_max = data_max if data_max > data_min else data_min + 1
+            data_threshold = data_min - 0.01
+
+            mapped_colors = common.convert_value_to_red_blue(
+                activation_times,
+                data_min,
+                color_max,
+                data_threshold,
+            )
+            marker_colors = [
+                f'rgb({red},{green},{blue})'
+                for red, green, blue in np.rint(
+                    mapped_colors[valid_activation] * 255
+                ).astype(int)
+            ]
 
             activation_fig.add_trace(
                 go.Scatter3d(
@@ -162,14 +182,47 @@ for data_id in range(len(clinical_file_paths)):
                     name='Activated electrode',
                     marker={
                         'size': 4,
-                        'color': activation_values,
-                        'colorscale': 'RdBu_r',
-                        'cmin': data_min,
-                        'cmax': data_max,
-                        'colorbar': {'title': 'Activation (ms)'},
+                        'color': marker_colors,
                     },
                     text=[f'Electrode {i}' for i in np.flatnonzero(valid_activation)],
-                    hovertemplate='%{text}<br>Activation: %{marker.color:.2f} ms<extra></extra>',
+                    customdata=activation_values,
+                    hovertemplate='%{text}<br>Activation: %{customdata:.2f} ms<extra></extra>',
+                )
+            )
+
+            colorbar_values = np.linspace(data_min, color_max, 256)
+            colorbar_rgb = common.convert_value_to_red_blue(
+                colorbar_values,
+                data_min,
+                color_max,
+                data_threshold,
+            )
+            colorscale = [
+                [
+                    index / (len(colorbar_rgb) - 1),
+                    f'rgb({red},{green},{blue})',
+                ]
+                for index, (red, green, blue) in enumerate(
+                    np.rint(colorbar_rgb * 255).astype(int)
+                )
+            ]
+            activation_fig.add_trace(
+                go.Scatter3d(
+                    x=[None],
+                    y=[None],
+                    z=[None],
+                    mode='markers',
+                    showlegend=False,
+                    hoverinfo='skip',
+                    marker={
+                        'size': 0,
+                        'color': [data_min],
+                        'colorscale': colorscale,
+                        'cmin': data_min,
+                        'cmax': color_max,
+                        'showscale': True,
+                        'colorbar': {'title': 'Activation (ms)'},
+                    },
                 )
             )
         if missing_activation.any():
@@ -180,7 +233,7 @@ for data_id in range(len(clinical_file_paths)):
                     z=electrode_positions[missing_activation, 2],
                     mode='markers',
                     name='No activation time',
-                    marker={'size': 4, 'color': 'lightgray'},
+                    marker={'size': 2, 'color': 'lightgray'},
                     text=[f'Electrode {i}' for i in np.flatnonzero(missing_activation)],
                     hovertemplate='%{text}<br>No activation time<extra></extra>',
                 )
