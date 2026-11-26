@@ -218,7 +218,14 @@ def electrode_positions_and_activation_color(electrode_positions, activation_tim
         height=900,
     )
 
-def electrode_voxel_mapping(electrode_id_on_voxel, voxel_points, electrode_positions, parameters, file_path):
+def electrode_voxel_mapping(
+    electrode_id_on_voxel,
+    voxel_points,
+    electrode_positions,
+    parameters,
+    file_path,
+    geometry,
+):
     # show electrodes in gray, the associated voxels in black, and draw a line linking the electrode-voxel pairs
     paired_voxel_ids = np.flatnonzero(electrode_id_on_voxel >= 0)
     paired_electrode_ids = electrode_id_on_voxel[paired_voxel_ids]
@@ -234,6 +241,22 @@ def electrode_voxel_mapping(electrode_id_on_voxel, voxel_points, electrode_posit
     electrode_pair_points = electrode_positions[paired_electrode_ids]
 
     mapping_fig = go.Figure()
+    mesh_vertices = np.asarray(geometry['vertex'])
+    mesh_faces = np.asarray(geometry['face'])
+    mapping_fig.add_trace(
+        go.Mesh3d(
+            x=mesh_vertices[:, 0],
+            y=mesh_vertices[:, 1],
+            z=mesh_vertices[:, 2],
+            i=mesh_faces[:, 0],
+            j=mesh_faces[:, 1],
+            k=mesh_faces[:, 2],
+            name='Refined mesh',
+            color='lightgray',
+            opacity=0.3,
+            hoverinfo='skip',
+        )
+    )
 
     valid_electrodes = np.isfinite(electrode_positions).all(axis=1)
     mapping_fig.add_trace(
