@@ -59,6 +59,13 @@ for data_id in range(len(clinical_file_paths)):
     electrogram = electrogram.transpose(0, 2, 1).reshape(-1, n_time) # (total_electrodes, n_time)
     electrode_positions = electrode_positions.reshape(-1, 3) # (total_electrodes, 3)
 
+    # remove those nan activation_times, and the associated electrogram, electrogram_qrs_subtracted, electrode_positions
+    valid_activation_times = ~np.isnan(activation_times)
+    activation_times = activation_times[valid_activation_times]
+    electrogram = electrogram[valid_activation_times]
+    electrogram_qrs_subtracted = electrogram_qrs_subtracted[valid_activation_times]
+    electrode_positions = electrode_positions[valid_activation_times]
+
     debug_plot = 0
     if debug_plot == 1:
         # plot some electrograms with their activation markers
@@ -73,7 +80,7 @@ for data_id in range(len(clinical_file_paths)):
     geometry = modules.utility.load_npz_with_numpy2_pickle_compatibility(file_path_3, allow_pickle=True)
 
     voxel = geometry['voxel']
-    
+
 
 #%%
 print('done')
