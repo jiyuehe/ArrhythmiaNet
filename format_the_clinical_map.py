@@ -69,13 +69,19 @@ for data_id in [0]: #range(len(clinical_file_paths)):
     electrogram_qrs_subtracted = electrogram_qrs_subtracted[valid_activation_times]
     electrode_positions = electrode_positions[valid_activation_times]
 
-    debug_plot = 0
+    debug_plot = 1
     if debug_plot == 1:
         # plot some electrograms with their activation markers
         modules.clinical_data_plots.electrogram_and_activation(activation_times, electrogram, n_time, electrogram_qrs_subtracted, file_path, parameters)
 
         # plot electrode positions colored by activation time
-        modules.clinical_data_plots.electrode_positions_and_activation_color(electrode_positions, activation_times, file_path, parameters)
+        modules.clinical_data_plots.electrode_positions_and_activation_color(
+            electrode_positions,
+            activation_times,
+            file_path,
+            parameters,
+            suffix='electrode',
+        )
 
     # assign electrode data to atrial voxels
     name_prefix = file_path.stem.replace('_carto_catheter_processed', '')
@@ -123,27 +129,12 @@ for data_id in [0]: #range(len(clinical_file_paths)):
         vertex_normals[vertex_id_of_voxel[valid_voxel_vertices]]
     )
 
-    voxel_points = np.asarray(
-        [voxel[id] for id in range(n_voxel)],
-        dtype=np.float64,
-    )
-    # if 'vertex' in geometry and 'vertex_id_of_voxel' in geometry:
-    vertex = np.asarray(geometry['vertex'], dtype=np.float64)
-    vertex_id_of_voxel = np.asarray(geometry['vertex_id_of_voxel'], dtype=np.int64)
-    valid_voxel_vertices = (
-        (vertex_id_of_voxel >= 0)
-        & (vertex_id_of_voxel < vertex.shape[0])
-    )
-    voxel_points[valid_voxel_vertices] = (
-        vertex[vertex_id_of_voxel[valid_voxel_vertices]]
-    )
-
     spacing = float(np.asarray(geometry.get('Delta', 1.0)).reshape(-1)[0])
     ray_tolerance = max(spacing, 1.0)
     normal_distance_threshold = 15.0
     electrode_positions = np.asarray(electrode_positions, dtype=np.float64)
 
-    for voxel_id, (point, normal) in enumerate(zip(voxel_points, voxel_normals)):
+    for voxel_id, (point, normal) in enumerate(zip(voxel, voxel_normals)):
         if not np.isfinite(normal).all():
             continue
 
@@ -199,12 +190,12 @@ for data_id in [0]: #range(len(clinical_file_paths)):
     electrogram_on_voxel[voxels_to_unassign] = np.nan
     electrogram_qrs_subtracted_on_voxel[voxels_to_unassign] = np.nan
 
-    debug_plot = 0
+    debug_plot = 1
     if debug_plot == 1:
         # show electrodes in gray, the associated voxels in black, and draw a line linking the electrode-voxel pairs
         modules.clinical_data_plots.electrode_voxel_mapping(
             electrode_id_on_voxel,
-            voxel_points,
+            voxel,
             electrode_positions,
             parameters,
             file_path,
@@ -212,7 +203,13 @@ for data_id in [0]: #range(len(clinical_file_paths)):
         )
 
         # show electrode voxel colors
-        modules.clinical_data_plots.electrode_positions_and_activation_color(voxel_points, activation_time_on_voxel, file_path, parameters)
+        modules.clinical_data_plots.electrode_positions_and_activation_color(
+            voxel,
+            activation_time_on_voxel,
+            file_path,
+            parameters,
+            suffix='voxel',
+        )
 
     # interpolate from the valid electrode voxels to all voxels
     def interpolate_voxel_field(values):
@@ -230,14 +227,14 @@ for data_id in [0]: #range(len(clinical_file_paths)):
         if valid_source_voxels.size == 0:
             return values
 
-        source_points = voxel_points[valid_source_voxels]
+        source_points = voxel[valid_source_voxels]
         source_values = values[valid_source_voxels]
 
         try:
             linear_values = griddata(
                 source_points,
                 source_values,
-                voxel_points,
+                voxel,
                 method='linear',
             )
         except (QhullError, ValueError):
@@ -247,7 +244,7 @@ for data_id in [0]: #range(len(clinical_file_paths)):
             return griddata(
                 source_points,
                 source_values,
-                voxel_points,
+                voxel,
                 method='nearest',
             )
 
@@ -258,7 +255,7 @@ for data_id in [0]: #range(len(clinical_file_paths)):
                 linear_values[missing] = griddata(
                     source_points,
                     source_values,
-                    voxel_points[missing],
+                    voxel[missing],
                     method='nearest',
                 )
         else:
@@ -267,7 +264,7 @@ for data_id in [0]: #range(len(clinical_file_paths)):
                 linear_values[missing] = griddata(
                     source_points,
                     source_values,
-                    voxel_points[missing],
+                    voxel[missing],
                     method='nearest',
                 )
         return linear_values
@@ -276,10 +273,16 @@ for data_id in [0]: #range(len(clinical_file_paths)):
         activation_time_on_voxel
     )
 
-    debug_plot = 0
+    debug_plot = 1
     if debug_plot == 1:
         # show electrode voxel colors
-        modules.clinical_data_plots.electrode_positions_and_activation_color(voxel_points, activation_time_on_voxel, file_path, parameters)
+        modules.clinical_data_plots.electrode_positions_and_activation_color(
+            voxel,
+            activation_time_on_voxel,
+            file_path,
+            parameters,
+            suffix='voxel_interpolated',
+        )
 
 #%%
 print('done')

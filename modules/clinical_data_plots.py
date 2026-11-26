@@ -106,7 +106,13 @@ def electrogram_and_activation(activation_times, electrogram, n_time, electrogra
         height=300 * len(selected_ids),
     )
 
-def electrode_positions_and_activation_color(electrode_positions, activation_times, file_path, parameters):
+def electrode_positions_and_activation_color(
+    electrode_positions,
+    activation_times,
+    file_path,
+    parameters,
+    suffix,
+):
     # plot electrode positions colored by activation time
     valid_positions = np.isfinite(electrode_positions).all(axis=1)
     valid_activation = np.isfinite(activation_times) & valid_positions
@@ -208,12 +214,12 @@ def electrode_positions_and_activation_color(electrode_positions, activation_tim
         },
         template='plotly_white',
     )
-    figure_stem = file_path.stem.replace('_processed', '')
+    figure_stem = file_path.stem.replace('_carto_catheter_processed', '')
     activation_fig.write_html(
-        parameters['result'] / f'{figure_stem}_activation_map.html'
+        parameters['result'] / f'{figure_stem}_activation_map_{suffix}.html'
     )
     activation_fig.write_image(
-        parameters['result'] / f'{figure_stem}_activation_map.png',
+        parameters['result'] / f'{figure_stem}_activation_map_{suffix}.png',
         width=1200,
         height=900,
     )
