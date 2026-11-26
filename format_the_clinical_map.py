@@ -128,21 +128,6 @@ for data_id in range(len(clinical_file_paths)):
     voxel_normals[valid_voxel_vertices] = (
         vertex_normals[vertex_id_of_voxel[valid_voxel_vertices]]
     )
-    # else:
-    #     # For meshes without a face table, infer outward normals from missing
-    #     # axis-aligned neighbours in the voxel grid.
-    #     occupied = {tuple(point) for point in voxel.tolist()}
-    #     axes = np.eye(3, dtype=np.float64)
-    #     for voxel_id, point in enumerate(voxel):
-    #         normal = np.zeros(3, dtype=np.float64)
-    #         for axis_id in range(3):
-    #             for direction in (-1, 1):
-    #                 neighbour = tuple(point + direction * axes[axis_id].astype(np.int64))
-    #                 if neighbour not in occupied:
-    #                     normal[axis_id] += direction
-    #         normal_length = np.linalg.norm(normal)
-    #         if normal_length > 0:
-    #             voxel_normals[voxel_id] = normal / normal_length
 
     voxel_points = np.asarray(
         [voxel[id] for id in range(n_voxel)],
