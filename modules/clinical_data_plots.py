@@ -97,10 +97,10 @@ def electrogram_and_activation(activation_times, electrogram, n_time, electrogra
 
     figure_stem = file_path.stem.replace('_processed', '')
     electrogram_fig.write_html(
-        parameters['result_folder'] / f'{figure_stem}_electrograms.html'
+        parameters['result'] / f'{figure_stem}_electrograms.html'
     )
     electrogram_fig.write_image(
-        parameters['result_folder'] / f'{figure_stem}_electrograms.png',
+        parameters['result'] / f'{figure_stem}_electrograms.png',
         width=1200,
         height=300 * len(selected_ids),
     )
@@ -209,10 +209,11 @@ def electrode_positions_and_activation_color(electrode_positions, activation_tim
     )
     figure_stem = file_path.stem.replace('_processed', '')
     activation_fig.write_html(
-        parameters['result_folder'] / f'{figure_stem}_activation_map.html'
+        parameters['result'] / f'{figure_stem}_activation_map.html'
     )
     activation_fig.write_image(
-        parameters['result_folder'] / f'{figure_stem}_activation_map.png',
+        parameters['result'] / f'{figure_stem}_activation_map.png',
         width=1200,
         height=900,
     )
+

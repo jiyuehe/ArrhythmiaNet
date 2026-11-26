@@ -21,8 +21,8 @@ import modules
 #%%
 parameters = {}
 parameters['data_folder_patient'] = Path('/home/j/Documents/box/carto3_files/data_npz/good')
-parameters['result_folder'] = Path(__file__).resolve().parent / 'result'
-parameters['result_folder'].mkdir(parents=True, exist_ok=True)
+parameters['result'] = Path(__file__).resolve().parent / 'result'
+parameters['mesh_npz'] = Path('/home/j/Desktop/ssd/carto3_data/processed')
 
 clinical_file_paths = list(parameters['data_folder_patient'].glob('*_carto_catheter_processed.npz'))
 
@@ -68,7 +68,12 @@ for data_id in range(len(clinical_file_paths)):
         modules.clinical_data_plots.electrode_positions_and_activation_color(electrode_positions, activation_times, file_path, parameters)
 
     # assign electrode data to atrial voxels
+    name_prefix = file_path.stem.replace('_carto_catheter_processed', '')
+    file_path_3 = parameters['mesh_npz'] / f'{name_prefix}_mesh.npz'
+    geometry = modules.utility.load_npz_with_numpy2_pickle_compatibility(file_path_3, allow_pickle=True)
 
+    voxel = geometry['voxel']
+    
 
 #%%
 print('done')
