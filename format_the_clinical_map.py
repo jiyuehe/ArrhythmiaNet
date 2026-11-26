@@ -284,5 +284,9 @@ for data_id in [0]: #range(len(clinical_file_paths)):
             suffix='voxel_interpolated',
         )
 
+    activation_time_on_voxel
+    electrogram_on_voxel
+    electrogram_qrs_subtracted_on_voxel
+
 #%%
 print('done')
