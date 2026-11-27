@@ -175,7 +175,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
             clinical_data_file_name = name_prefixes[i] + '_clinical_data.npz'
             clinical_data = load_npz_with_numpy2_pickle_compatibility(data_folder_processed_clinical / clinical_data_file_name, allow_pickle=True)
 
-            egm = clinical_data['electrogram_qrs_subtracted_on_voxel'] # shape (n_node, t)
+            egm = clinical_data['electrogram_qrs_subtracted_cleaned_on_voxel'] # shape (n_node, t)
             egm = egm.T # shape (t, n_node)
             electrode_mask = np.isfinite(egm).all(axis=0)
             non_e_id = np.flatnonzero(~electrode_mask)
