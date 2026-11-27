@@ -51,7 +51,7 @@ if arrhythmia_flag == 1:
    parameters['t_end'] = parameters['t_start'] + parameters['n_timepoints'] * parameters['time_step']
 parameters['data_folder_mesh'] = Path('/home/j/Desktop/ssd/carto3_data/processed')
 parameters['data_folder_patient'] = Path('/home/j/Documents/box/carto3_files/data_npz/good')
-parameters['data_folder_processed_clinical'] = Path(script_dir) / 'result' / 'processed_clinical_data'
+parameters['data_folder_processed_clinical'] = Path('/home/j/Desktop/ssd/git/ArrhythmiaNet/result/processed_clinical_data')
 parameters['result_folder'].mkdir(exist_ok=True)
 
 #%%
@@ -113,31 +113,30 @@ if train_predict_flag == 0:
          file_names_test = file_names_test[indices]
    elif testing_data_flag == 1: # clinical
       file_names_test_focal = [
-         '10_2-LA FAM',
-         '16_2-LA FAM',
-         '40_3-la',
-         '60_2-LA_ACTIVATION',
-         '83_2-1-ReLA',
-         '89_1-LAFAM SNS',
-         '90_1-ablation',
-         '91_2-LA sinus voltage baseline',
-         '91_2-LA sinus with ablation lesions',
-         '92_1-la volt',
-         '94_1-1-ReLA voltage_sinus',
-         '95_1-SINUS CARTO FINDER',
+         # '10_2-LA FAM',
+         # '16_2-LA FAM',
+         # '40_3-la',
+         # '60_2-LA_ACTIVATION',
+         # '89_1-LAFAM SNS',
+         # '90_1-ablation',
+         # '91_2-LA sinus voltage baseline',
+         # '91_2-LA sinus with ablation lesions',
+         # '92_1-la volt',
+         # '94_1-1-ReLA voltage_sinus',
+         # '95_1-SINUS CARTO FINDER',
          '99_2-LaFAM_cartofinder_data',
-         '100_1-LA FAM1',
-         '101_1-lagood',
-         '112_6-LA CL 300',
+         # '100_1-LA FAM1',
+         # '101_1-lagood',
+         # '112_6-LA CL 300',
       ]
 
       file_names_test_flutter = [
-         '19_1-x',
-         '102_2-1-1-ReLA FAM AT',
-         '102_2-LA FAM AFL1edit',
+         # '19_1-x',
+         # '102_2-1-1-ReLA FAM AT',
+         # '102_2-LA FAM AFL1edit',
          '107_3-LA CL 270',
-         '114_1-LA fam afl 250',
-         '114_1-LA fam afl 250_pre abl',
+         # '114_1-LA fam afl 250',
+         # '114_1-LA fam afl 250_pre abl',
       ]
 
       # add '_clinical_data.npz' to file name ends

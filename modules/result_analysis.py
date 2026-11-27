@@ -82,13 +82,14 @@ def plot_truth_and_predicted_map(truth_data, predicted_data, file_names_test, pa
             # n_bad_electrode = int(bad_electrode_ratio * n_nodes)
             # non_e_id = np.random.choice(n_nodes, n_bad_electrode, replace=False)
         elif train_predict_flag == 1: # clinical
-            data = np.load(parameters['data_folder_patient'] / f'{name_prefix}_clinical_data.npz', allow_pickle=True)
-            map_data = {k: data[k] for k in data.files}
+            pass
+            # data = np.load(parameters['data_folder_processed_clinical'] / f'{name_prefix}_clinical_data.npz', allow_pickle=True)
+            # clinical_data = {k: data[k] for k in data.files}
 
-            # find the good electrode nodes that have good signals
-            act = map_data['clinical_activation_uni']
-            good_e_id = [i for i, x in enumerate(act) if x != 0]
-            non_e_id = np.setdiff1d(np.arange(n_nodes), good_e_id)
+            # # find the good electrode nodes that have good signals
+            # act = clinical_data['activation_time_on_voxel']
+            # good_e_id = [i for i, x in enumerate(act) if x != 0]
+            # non_e_id = np.setdiff1d(np.arange(n_nodes), good_e_id)
 
         if arrhythmia_flag == 0: # focal
             data_truth = truth_data[sample_id].flatten()

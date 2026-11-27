@@ -175,7 +175,7 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
             clinical_data_file_name = name_prefixes[i] + '_clinical_data.npz'
             clinical_data = load_npz_with_numpy2_pickle_compatibility(data_folder_processed_clinical / clinical_data_file_name, allow_pickle=True)
 
-            egm = clinical_data['electrogram_on_voxel'] # shape (n_node, t)
+            egm = clinical_data['electrogram_qrs_subtracted_on_voxel'] # shape (n_node, t)
             egm = egm.T # shape (t, n_node)
             electrode_mask = np.isfinite(egm).all(axis=0)
             non_e_id = np.flatnonzero(~electrode_mask)
@@ -208,10 +208,10 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
                 y = np.stack((y1, y2, y3), axis=1)
         elif data_type == 1: # clinical
             if arrhythmia_flag == 0: # focal
-                y = clinical_data['activation_time_on_voxel']
+                y = clinical_data['activation_time_on_voxel_interpolated']
                 y = normalize_to_unit_interval(y)
             elif arrhythmia_flag == 1: # flutter
-                y = clinical_data['activation_time_on_voxel']
+                y = clinical_data['activation_time_on_voxel_interpolated']
                 no_value_mask = ~np.isfinite(y)
                 y_normalized = normalize_to_unit_interval(y)
                 phase = 2 * np.pi * y_normalized

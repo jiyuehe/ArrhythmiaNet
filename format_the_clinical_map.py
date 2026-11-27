@@ -34,8 +34,8 @@ clinical_file_paths = list(parameters['data_folder_patient'].glob('*_carto_cathe
 # sort file names according to the patient id in front of the first '_'
 clinical_file_paths.sort(key=lambda file: int(file.name.split('_', 1)[0]))
 
-focal_patient_id = [10, 16, 40, 60, 89, 90, 91, 92, 94, 95, 99, 100, 101, 112]
-flutter_patient_id = [19, 102, 107, 112, 114]
+focal_patient_id = [99] # [10, 16, 40, 60, 89, 90, 91, 92, 94, 95, 99, 100, 101, 112]
+flutter_patient_id = [107] # [19, 102, 107, 112, 114]
 
 for data_id in range(len(clinical_file_paths)):
     file_path = clinical_file_paths[data_id]
@@ -89,10 +89,16 @@ for data_id in range(len(clinical_file_paths)):
     electrogram_qrs_subtracted = electrogram_qrs_subtracted[valid_activation_times]
     electrode_positions = electrode_positions[valid_activation_times]
 
-    debug_plot = 0
+    # keep 50 ms centered on activation, with a 25 ms cosine taper on each side.
+    distance_from_activation = np.abs(np.arange(n_time)[None, :] - activation_times[:, None])
+    taper_fraction = np.clip((distance_from_activation - 25) / 25, 0, 1)
+    window = 0.5 * (1 + np.cos(np.pi * taper_fraction))
+    electrogram_qrs_subtracted_cleaned = electrogram_qrs_subtracted * window
+
+    debug_plot = 1
     if debug_plot == 1:
         # plot some electrograms with their activation markers
-        modules.clinical_data_plots.electrogram_and_activation(activation_times, electrogram, n_time, electrogram_qrs_subtracted, file_path, parameters)
+        modules.clinical_data_plots.electrogram_and_activation(activation_times, electrogram, n_time, electrogram_qrs_subtracted_cleaned, file_path, parameters)
 
     debug_plot = 1
     if debug_plot == 1:
@@ -119,7 +125,7 @@ for data_id in range(len(clinical_file_paths)):
     activation_time_on_voxel = np.full(n_voxel, np.nan, dtype=np.float32)
     activation_time_on_voxel_interpolated = np.full(n_voxel, np.nan, dtype=np.float32)
     electrogram_on_voxel = np.full((n_voxel, n_time), np.nan, dtype=np.float32)
-    electrogram_qrs_subtracted_on_voxel = np.full((n_voxel, n_time), np.nan, dtype=np.float32)
+    electrogram_qrs_subtracted_cleaned_on_voxel = np.full((n_voxel, n_time), np.nan, dtype=np.float32)
 
     # Use face normals from the refined geometry when available.  Each voxel
     # is matched to the refined vertex stored in vertex_id_of_voxel.
@@ -189,8 +195,8 @@ for data_id in range(len(clinical_file_paths)):
         )
         activation_time_on_voxel[voxel_id] = activation_times[closest_id]
         electrogram_on_voxel[voxel_id] = electrogram[closest_id]
-        electrogram_qrs_subtracted_on_voxel[voxel_id] = (
-            electrogram_qrs_subtracted[closest_id]
+        electrogram_qrs_subtracted_cleaned_on_voxel[voxel_id] = (
+            electrogram_qrs_subtracted_cleaned[closest_id]
         )
 
     assigned_voxels = np.flatnonzero(electrode_id_on_voxel >= 0)
@@ -211,7 +217,7 @@ for data_id in range(len(clinical_file_paths)):
     pair_distance_squared_on_voxel[voxels_to_unassign] = np.inf
     activation_time_on_voxel[voxels_to_unassign] = np.nan
     electrogram_on_voxel[voxels_to_unassign] = np.nan
-    electrogram_qrs_subtracted_on_voxel[voxels_to_unassign] = np.nan
+    electrogram_qrs_subtracted_cleaned_on_voxel[voxels_to_unassign] = np.nan
 
     debug_plot = 0
     if debug_plot == 1:
@@ -317,7 +323,7 @@ for data_id in range(len(clinical_file_paths)):
     processed_clinical_data['activation_time_on_voxel'] = activation_time_on_voxel
     processed_clinical_data['activation_time_on_voxel_interpolated'] = activation_time_on_voxel_interpolated
     processed_clinical_data['electrogram_on_voxel'] = electrogram_on_voxel
-    processed_clinical_data['electrogram_qrs_subtracted_on_voxel'] = electrogram_qrs_subtracted_on_voxel
+    processed_clinical_data['electrogram_qrs_subtracted_cleaned_on_voxel'] = electrogram_qrs_subtracted_cleaned_on_voxel
     np.savez(output_path, **processed_clinical_data)
 
 #%%
