@@ -163,41 +163,6 @@ def electrode_positions_and_activation_color(
             )
         )
 
-        colorbar_values = np.linspace(data_min, color_max, 256)
-        colorbar_rgb = common.convert_value_to_red_blue(
-            colorbar_values,
-            data_min,
-            color_max,
-            data_threshold,
-        )
-        colorscale = [
-            [
-                index / (len(colorbar_rgb) - 1),
-                f'rgb({red},{green},{blue})',
-            ]
-            for index, (red, green, blue) in enumerate(
-                np.rint(colorbar_rgb * 255).astype(int)
-            )
-        ]
-        activation_fig.add_trace(
-            go.Scatter3d(
-                x=[None],
-                y=[None],
-                z=[None],
-                mode='markers',
-                showlegend=False,
-                hoverinfo='skip',
-                marker={
-                    'size': 0,
-                    'color': [data_min],
-                    'colorscale': colorscale,
-                    'cmin': data_min,
-                    'cmax': color_max,
-                    'showscale': True,
-                    'colorbar': {'title': 'Activation (ms)'},
-                },
-            )
-        )
     if missing_activation.any():
         activation_fig.add_trace(
             go.Scatter3d(
@@ -218,9 +183,9 @@ def electrode_positions_and_activation_color(
         scene={
             'aspectmode': 'data',
             'camera': {'eye': CAMERA_EYE},
-            'xaxis': {'visible': False},
-            'yaxis': {'visible': False},
-            'zaxis': {'visible': False},
+            'xaxis': {'visible': True, 'showgrid': True},
+            'yaxis': {'visible': True, 'showgrid': True},
+            'zaxis': {'visible': True, 'showgrid': True},
         },
         template='plotly_white',
     )
@@ -233,6 +198,7 @@ def electrode_positions_and_activation_color(
         width=1200,
         height=900,
     )
+    common.crop_image(parameters['processed_clinical_data'] / f'{figure_stem}_activation_map_{suffix}.png')
 
 def electrode_voxel_mapping(
     electrode_id_on_voxel,
@@ -337,9 +303,9 @@ def electrode_voxel_mapping(
         scene={
             'aspectmode': 'data',
             'camera': {'eye': CAMERA_EYE},
-            'xaxis': {'visible': False},
-            'yaxis': {'visible': False},
-            'zaxis': {'visible': False},
+            'xaxis': {'visible': True, 'showgrid': True},
+            'yaxis': {'visible': True, 'showgrid': True},
+            'zaxis': {'visible': True, 'showgrid': True},
         },
         template='plotly_white',
     )
@@ -353,3 +319,4 @@ def electrode_voxel_mapping(
         width=1200,
         height=900,
     )
+    common.crop_image(parameters['processed_clinical_data'] / f'{figure_stem}_electrode_voxel_mapping.png')
