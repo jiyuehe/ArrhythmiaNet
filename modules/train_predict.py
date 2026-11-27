@@ -237,7 +237,7 @@ def predict(parameters, file_names_test, testing_data_flag, arrhythmia_flag):
             if testing_data_flag == 0: # simulation data
                 name_prefixes = [file_name.split('_simulation_results_')[0] for file_name in file_names_test] # extract name prefixes
             elif testing_data_flag == 1: # clinical data
-                name_prefixes = [file_name.split('_carto_catheter.npz')[0] for file_name in file_names_test] # extract name prefixes
+                name_prefixes = [file_name.removesuffix('_clinical_data.npz') for file_name in file_names_test] # extract name prefixes
 
             neural_network_input, neural_network_target = utility.load_input_and_target(start_idx, end_idx, file_names_test, name_prefixes, parameters, testing_data_flag, arrhythmia_flag)
 
