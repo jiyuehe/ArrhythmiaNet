@@ -95,6 +95,7 @@ for data_id in [0]: #range(len(clinical_file_paths)):
     electrode_id_on_voxel = np.full(n_voxel, -1, dtype=np.int64)
     pair_distance_squared_on_voxel = np.full(n_voxel, np.inf, dtype=np.float64)
     activation_time_on_voxel = np.full(n_voxel, np.nan, dtype=np.float32)
+    activation_time_on_voxel_interpolated = np.full(n_voxel, np.nan, dtype=np.float32)
     electrogram_on_voxel = np.full((n_voxel, n_time), np.nan, dtype=np.float32)
     electrogram_qrs_subtracted_on_voxel = np.full((n_voxel, n_time), np.nan, dtype=np.float32)
 
@@ -269,7 +270,7 @@ for data_id in [0]: #range(len(clinical_file_paths)):
                 )
         return linear_values
 
-    activation_time_on_voxel[:] = interpolate_voxel_field(
+    activation_time_on_voxel_interpolated[:] = interpolate_voxel_field(
         activation_time_on_voxel
     )
 
@@ -278,13 +279,14 @@ for data_id in [0]: #range(len(clinical_file_paths)):
         # show electrode voxel colors
         modules.clinical_data_plots.electrode_positions_and_activation_color(
             voxel,
-            activation_time_on_voxel,
+            activation_time_on_voxel_interpolated,
             file_path,
             parameters,
             suffix='voxel_interpolated',
         )
 
     activation_time_on_voxel
+    activation_time_on_voxel_interpolated
     electrogram_on_voxel
     electrogram_qrs_subtracted_on_voxel
 
