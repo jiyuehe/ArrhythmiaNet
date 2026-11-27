@@ -34,19 +34,24 @@ clinical_file_paths = list(parameters['data_folder_patient'].glob('*_carto_cathe
 # sort file names according to the patient id in front of the first '_'
 clinical_file_paths.sort(key=lambda file: int(file.name.split('_', 1)[0]))
 
-focal_patient_id = [10, 16, 40, 60, 89, 90, 91, 92, 94, 95, 99, 100, 101, 112]
-flutter_patient_id = []
+focal_patient_id = [10]#[10, 16, 40, 60, 89, 90, 91, 92, 94, 95, 99, 100, 101, 112]
+flutter_patient_id = [19]#[19, 102, 107, 112, 114]
 
 for data_id in range(len(clinical_file_paths)):
     file_path = clinical_file_paths[data_id]
     name_prefix = file_path.stem.replace('_carto_catheter_processed', '')
     patient_id = int(name_prefix.split('_', 1)[0])
 
+    if patient_id in focal_patient_id:
+        map_type = 'focal'
+    elif patient_id in flutter_patient_id:
+        map_tpye = 'flutter'
+
     output_path = parameters['processed_clinical_data'] / f'{name_prefix}_clinical_data.npz'
 
-    if not output_path.exists() and patient_id in focal_patient_id:
+    if not output_path.exists() and ((patient_id in focal_patient_id) or (patient_id in flutter_patient_id)):
         print(f'{name_prefix}, {data_id} of [0, {len(clinical_file_paths)}]')
-    if output_path.exists():
+    else:
         continue
 
     clinical_data_processed = modules.utility.load_npz_with_numpy2_pickle_compatibility(file_path, allow_pickle=True)
@@ -97,7 +102,8 @@ for data_id in range(len(clinical_file_paths)):
             activation_times,
             file_path,
             parameters,
-            suffix='electrode',
+            'electrode',
+            map_type
         )
 
     # assign electrode data to atrial voxels
@@ -227,7 +233,8 @@ for data_id in range(len(clinical_file_paths)):
             activation_time_on_voxel,
             file_path,
             parameters,
-            suffix='voxel',
+            'voxel',
+            map_type
         )
 
     # interpolate from the valid electrode voxels to all voxels
@@ -300,7 +307,8 @@ for data_id in range(len(clinical_file_paths)):
             activation_time_on_voxel_interpolated,
             file_path,
             parameters,
-            suffix='voxel_interpolated',
+            'voxel_interpolated',
+            map_type
         )
 
     # save the variable

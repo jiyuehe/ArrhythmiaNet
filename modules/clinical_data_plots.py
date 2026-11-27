@@ -120,25 +120,40 @@ def electrode_positions_and_activation_color(
     file_path,
     parameters,
     suffix,
+    map_type
 ):
     # plot electrode positions colored by activation time
     valid_positions = np.isfinite(electrode_positions).all(axis=1)
     valid_activation = np.isfinite(activation_times) & valid_positions
-    missing_activation = ~np.isfinite(activation_times) & valid_positions
     activation_fig = go.Figure()
+    voxel_ids = np.flatnonzero(valid_positions)
+    voxel_colors = np.full(voxel_ids.size, 'lightgray', dtype=object)
+    voxel_text = [
+        f'Electrode {electrode_id}<br>No activation time'
+        for electrode_id in voxel_ids
+    ]
     if valid_activation.any():
         activation_values = activation_times[valid_activation]
         data_min = activation_values.min()
         data_max = activation_values.max()
-        color_max = data_max if data_max > data_min else data_min + 1
+        color_max = data_max
         data_threshold = data_min - 0.01
 
-        mapped_colors = common.convert_value_to_red_blue(
-            activation_times,
-            data_min,
-            color_max,
-            data_threshold,
-        )
+        if map_type == 'focal':
+            mapped_colors = common.convert_value_to_red_blue(
+                activation_times,
+                data_min,
+                color_max,
+                data_threshold,
+            )
+        elif map_type == 'flutter':
+            mapped_colors = common.convert_value_to_red_magenta(
+                activation_times,
+                data_min,
+                color_max,
+                data_threshold,
+            )
+
         marker_colors = [
             f'rgb({red},{green},{blue})'
             for red, green, blue in np.rint(
@@ -146,34 +161,58 @@ def electrode_positions_and_activation_color(
             ).astype(int)
         ]
 
-        activation_fig.add_trace(
-            go.Scatter3d(
-                x=electrode_positions[valid_activation, 0],
-                y=electrode_positions[valid_activation, 1],
-                z=electrode_positions[valid_activation, 2],
-                mode='markers',
-                name='Activated electrode',
-                marker={
-                    'size': 4,
-                    'color': marker_colors,
-                },
-                text=[f'Electrode {i}' for i in np.flatnonzero(valid_activation)],
-                customdata=activation_values,
-                hovertemplate='%{text}<br>Activation: %{customdata:.2f} ms<extra></extra>',
+        activation_ids = np.flatnonzero(valid_activation)
+        positions_in_voxels = np.searchsorted(voxel_ids, activation_ids)
+        voxel_colors[positions_in_voxels] = marker_colors
+        for position, electrode_id, activation_time in zip(
+            positions_in_voxels,
+            activation_ids,
+            activation_values,
+        ):
+            voxel_text[position] = (
+                f'Electrode {electrode_id}<br>Activation: '
+                f'{activation_time:.2f} ms'
             )
-        )
 
-    if missing_activation.any():
+    if voxel_ids.size:
+        # Plotly marker sizes are in screen pixels, so construct 1 mm cubes in data space.
+        cube_corners = np.array([
+            [-0.5, -0.5, -0.5],
+            [0.5, -0.5, -0.5],
+            [0.5, 0.5, -0.5],
+            [-0.5, 0.5, -0.5],
+            [-0.5, -0.5, 0.5],
+            [0.5, -0.5, 0.5],
+            [0.5, 0.5, 0.5],
+            [-0.5, 0.5, 0.5],
+        ])
+        cube_triangles = np.array([
+            [0, 2, 1], [0, 3, 2],
+            [4, 5, 6], [4, 6, 7],
+            [0, 1, 5], [0, 5, 4],
+            [1, 2, 6], [1, 6, 5],
+            [2, 3, 7], [2, 7, 6],
+            [3, 0, 4], [3, 4, 7],
+        ])
+        voxel_vertices = (
+            electrode_positions[voxel_ids, None, :] + cube_corners[None, :, :]
+        ).reshape(-1, 3)
+        voxel_faces = (
+            cube_triangles[None, :, :] + 8 * np.arange(voxel_ids.size)[:, None, None]
+        ).reshape(-1, 3)
         activation_fig.add_trace(
-            go.Scatter3d(
-                x=electrode_positions[missing_activation, 0],
-                y=electrode_positions[missing_activation, 1],
-                z=electrode_positions[missing_activation, 2],
-                mode='markers',
-                name='No activation time',
-                marker={'size': 2, 'color': 'lightgray'},
-                text=[f'Electrode {i}' for i in np.flatnonzero(missing_activation)],
-                hovertemplate='%{text}<br>No activation time<extra></extra>',
+            go.Mesh3d(
+                x=voxel_vertices[:, 0],
+                y=voxel_vertices[:, 1],
+                z=voxel_vertices[:, 2],
+                i=voxel_faces[:, 0],
+                j=voxel_faces[:, 1],
+                k=voxel_faces[:, 2],
+                facecolor=np.repeat(voxel_colors, cube_triangles.shape[0]),
+                flatshading=True,
+                name='Electrode voxels',
+                text=np.repeat(voxel_text, cube_corners.shape[0]),
+                hovertemplate='%{text}<extra></extra>',
             )
         )
 
