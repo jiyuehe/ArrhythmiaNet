@@ -136,21 +136,20 @@ def electrode_positions_and_activation_color(
         activation_values = activation_times[valid_activation]
         data_min = activation_values.min()
         data_max = activation_values.max()
-        color_max = data_max
         data_threshold = data_min - 0.01
 
         if map_type == 'focal':
             mapped_colors = common.convert_value_to_red_blue(
                 activation_times,
                 data_min,
-                color_max,
+                data_max,
                 data_threshold,
             )
         elif map_type == 'flutter':
             mapped_colors = common.convert_value_to_red_magenta(
                 activation_times,
                 data_min,
-                color_max,
+                data_max,
                 data_threshold,
             )
 

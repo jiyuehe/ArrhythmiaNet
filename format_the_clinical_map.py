@@ -34,8 +34,8 @@ clinical_file_paths = list(parameters['data_folder_patient'].glob('*_carto_cathe
 # sort file names according to the patient id in front of the first '_'
 clinical_file_paths.sort(key=lambda file: int(file.name.split('_', 1)[0]))
 
-focal_patient_id = [10]#[10, 16, 40, 60, 89, 90, 91, 92, 94, 95, 99, 100, 101, 112]
-flutter_patient_id = [19]#[19, 102, 107, 112, 114]
+focal_patient_id = [10, 16, 40, 60, 89, 90, 91, 92, 94, 95, 99, 100, 101, 112]
+flutter_patient_id = [19, 102, 107, 112, 114]
 
 for data_id in range(len(clinical_file_paths)):
     file_path = clinical_file_paths[data_id]
@@ -45,7 +45,7 @@ for data_id in range(len(clinical_file_paths)):
     if patient_id in focal_patient_id:
         map_type = 'focal'
     elif patient_id in flutter_patient_id:
-        map_tpye = 'flutter'
+        map_type = 'flutter'
 
     output_path = parameters['processed_clinical_data'] / f'{name_prefix}_clinical_data.npz'
 
