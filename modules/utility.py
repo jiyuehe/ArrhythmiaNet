@@ -133,7 +133,7 @@ def normalize_to_unit_interval(values):
 
 def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, parameters, data_type, arrhythmia_flag):
     data_folder_simulation = parameters['data_folder_simulation'] 
-    data_folder_patient = parameters['data_folder_patient']
+    data_folder_processed_clinical = parameters['data_folder_processed_clinical']
     data_folder_mesh = parameters['data_folder_mesh']
 
     x_temp = [] # input. electrograms of all voxels
@@ -172,17 +172,11 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
             x[:,electrode_id_on_voxel] = x_electrode
         elif data_type == 1: # clinical
             # load data
-            clinical_data_file_name = name_prefixes[i] + '_catheter.npz'
-            map_data = load_npz_with_numpy2_pickle_compatibility(data_folder_patient / clinical_data_file_name, allow_pickle=True)
+            clinical_data_file_name = name_prefixes[i] + '_clinical_data.npz'
+            clinical_data = load_npz_with_numpy2_pickle_compatibility(data_folder_processed_clinical / clinical_data_file_name, allow_pickle=True)
 
-            # find the good electrode nodes that have good signals
-            activation_time = map_data['clinical_activation_uni']
-            good_e_id = [i for i, x in enumerate(activation_time) if x != 0]
-            non_e_id = np.setdiff1d(np.arange(n_nodes), good_e_id)
-
-            egm = map_data['clinical_electrogram_unipolar_refined'] # shape (n_node, t), here t is from 0 to 2500-1
+            egm =  clinical_data['electrogram_on_voxel'] # shape (n_node, t)
             egm = egm.T # shape (t, n_node)
-            egm = egm[2000-150:2000+150, :] # grab electrogram within the time window of interest
             x = normalize_to_unit_interval(egm)
 
         # add a binary row to indicate non-electrode nodes as a mask
@@ -210,8 +204,20 @@ def load_input_and_target(start_idx, end_idx, file_names, name_prefixes, paramet
                 y3 = no_value_mask.astype(np.float32)
                 y = np.stack((y1, y2, y3), axis=1)
         elif data_type == 1: # clinical
-            y = np.full(n_nodes, np.nan, dtype=np.float32)
-            y[good_e_id] = activation_time[good_e_id] # assign the clinical activation time to the good electrode nodes according to clinical data
+            if arrhythmia_flag == 0: # focal
+                y = clinical_data['activation_time_on_voxel']
+                y = normalize_to_unit_interval(y)
+            elif arrhythmia_flag == 1: # flutter
+                y = clinical_data['activation_time_on_voxel']
+                no_value_mask = ~np.isfinite(y)
+                y_normalized = normalize_to_unit_interval(y)
+                phase = 2 * np.pi * y_normalized
+                y1 = np.sin(phase)
+                y2 = np.cos(phase)
+                y1 = np.where(no_value_mask, np.nan, y1)
+                y2 = np.where(no_value_mask, np.nan, y2)
+                y3 = no_value_mask.astype(np.float32)
+                y = np.stack((y1, y2, y3), axis=1)
 
         y_temp.append(y)
             
