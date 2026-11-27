@@ -26,14 +26,24 @@ parameters = {}
 parameters['data_folder_patient'] = Path('/home/j/Documents/box/carto3_files/data_npz/good')
 parameters['result'] = Path(__file__).resolve().parent / 'result'
 parameters['mesh_npz'] = Path('/home/j/Desktop/ssd/carto3_data/processed')
+parameters['processed_clinical_data'] = parameters['result'] / 'processed_clinical_data'
+parameters['processed_clinical_data'].mkdir(exist_ok=True)
 
 clinical_file_paths = list(parameters['data_folder_patient'].glob('*_carto_catheter_processed.npz'))
 
 # sort file names according to the patient id in front of the first '_'
 clinical_file_paths.sort(key=lambda file: int(file.name.split('_', 1)[0]))
 
-for data_id in [0]: #range(len(clinical_file_paths)):
+for data_id in range(len(clinical_file_paths)):
     file_path = clinical_file_paths[data_id]
+    name_prefix = file_path.stem.replace('_carto_catheter_processed', '')
+
+    print(f'{name_prefix}, {data_id} of [0, {len(clinical_file_paths)}]')
+
+    output_path = parameters['processed_clinical_data'] / f'{name_prefix}_clinical_data.npz'
+    if output_path.exists():
+        continue
+
     clinical_data_processed = modules.utility.load_npz_with_numpy2_pickle_compatibility(file_path, allow_pickle=True)
 
     file_path_2 = file_path.with_name(file_path.name.replace('_processed', ''))
@@ -69,12 +79,14 @@ for data_id in [0]: #range(len(clinical_file_paths)):
     electrogram_qrs_subtracted = electrogram_qrs_subtracted[valid_activation_times]
     electrode_positions = electrode_positions[valid_activation_times]
 
-    debug_plot = 1
+    debug_plot = 0
     if debug_plot == 1:
         # plot some electrograms with their activation markers
         modules.clinical_data_plots.electrogram_and_activation(activation_times, electrogram, n_time, electrogram_qrs_subtracted, file_path, parameters)
 
-        # plot electrode positions colored by activation time
+    debug_plot = 1
+    if debug_plot == 1:
+        # plot electrodes colored by activation time
         modules.clinical_data_plots.electrode_positions_and_activation_color(
             electrode_positions,
             activation_times,
@@ -84,7 +96,6 @@ for data_id in [0]: #range(len(clinical_file_paths)):
         )
 
     # assign electrode data to atrial voxels
-    name_prefix = file_path.stem.replace('_carto_catheter_processed', '')
     file_path_3 = parameters['mesh_npz'] / f'{name_prefix}_mesh.npz'
     geometry = modules.utility.load_npz_with_numpy2_pickle_compatibility(file_path_3, allow_pickle=True)
 
@@ -191,7 +202,7 @@ for data_id in [0]: #range(len(clinical_file_paths)):
     electrogram_on_voxel[voxels_to_unassign] = np.nan
     electrogram_qrs_subtracted_on_voxel[voxels_to_unassign] = np.nan
 
-    debug_plot = 1
+    debug_plot = 0
     if debug_plot == 1:
         # show electrodes in gray, the associated voxels in black, and draw a line linking the electrode-voxel pairs
         modules.clinical_data_plots.electrode_voxel_mapping(
@@ -203,7 +214,9 @@ for data_id in [0]: #range(len(clinical_file_paths)):
             geometry,
         )
 
-        # show electrode voxel colors
+    debug_plot = 0
+    if debug_plot == 1:
+        # show all voxel: electrodes in colors
         modules.clinical_data_plots.electrode_positions_and_activation_color(
             voxel,
             activation_time_on_voxel,
@@ -276,7 +289,7 @@ for data_id in [0]: #range(len(clinical_file_paths)):
 
     debug_plot = 1
     if debug_plot == 1:
-        # show electrode voxel colors
+        # show interpolated map on all voxels
         modules.clinical_data_plots.electrode_positions_and_activation_color(
             voxel,
             activation_time_on_voxel_interpolated,
@@ -285,10 +298,14 @@ for data_id in [0]: #range(len(clinical_file_paths)):
             suffix='voxel_interpolated',
         )
 
-    activation_time_on_voxel
-    activation_time_on_voxel_interpolated
-    electrogram_on_voxel
-    electrogram_qrs_subtracted_on_voxel
+    # save the variable
+    processed_clinical_data = {}
+    processed_clinical_data['voxel'] = voxel
+    processed_clinical_data['activation_time_on_voxel'] = activation_time_on_voxel
+    processed_clinical_data['activation_time_on_voxel_interpolated'] = activation_time_on_voxel_interpolated
+    processed_clinical_data['electrogram_on_voxel'] = electrogram_on_voxel
+    processed_clinical_data['electrogram_qrs_subtracted_on_voxel'] = electrogram_qrs_subtracted_on_voxel
+    np.savez(output_path, **processed_clinical_data)
 
 #%%
 print('done')

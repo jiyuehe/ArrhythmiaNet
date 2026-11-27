@@ -98,10 +98,10 @@ def electrogram_and_activation(activation_times, electrogram, n_time, electrogra
 
     figure_stem = file_path.stem.replace('_processed', '')
     electrogram_fig.write_html(
-        parameters['result'] / f'{figure_stem}_electrograms.html'
+        parameters['processed_clinical_data'] / f'{figure_stem}_electrograms.html'
     )
     electrogram_fig.write_image(
-        parameters['result'] / f'{figure_stem}_electrograms.png',
+        parameters['processed_clinical_data'] / f'{figure_stem}_electrograms.png',
         width=1200,
         height=300 * len(selected_ids),
     )
@@ -216,10 +216,10 @@ def electrode_positions_and_activation_color(
     )
     figure_stem = file_path.stem.replace('_carto_catheter_processed', '')
     activation_fig.write_html(
-        parameters['result'] / f'{figure_stem}_activation_map_{suffix}.html'
+        parameters['processed_clinical_data'] / f'{figure_stem}_activation_map_{suffix}.html'
     )
     activation_fig.write_image(
-        parameters['result'] / f'{figure_stem}_activation_map_{suffix}.png',
+        parameters['processed_clinical_data'] / f'{figure_stem}_activation_map_{suffix}.png',
         width=1200,
         height=900,
     )
@@ -332,13 +332,12 @@ def electrode_voxel_mapping(
         template='plotly_white',
     )
 
-    parameters['result'].mkdir(parents=True, exist_ok=True)
     figure_stem = file_path.stem.replace('_carto_catheter_processed', '')
     mapping_fig.write_html(
-        parameters['result'] / f'{figure_stem}_electrode_voxel_mapping.html'
+        parameters['processed_clinical_data'] / f'{figure_stem}_electrode_voxel_mapping.html'
     )
     mapping_fig.write_image(
-        parameters['result'] / f'{figure_stem}_electrode_voxel_mapping.png',
+        parameters['processed_clinical_data'] / f'{figure_stem}_electrode_voxel_mapping.png',
         width=1200,
         height=900,
     )
