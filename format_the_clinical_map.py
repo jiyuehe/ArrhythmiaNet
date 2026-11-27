@@ -34,13 +34,18 @@ clinical_file_paths = list(parameters['data_folder_patient'].glob('*_carto_cathe
 # sort file names according to the patient id in front of the first '_'
 clinical_file_paths.sort(key=lambda file: int(file.name.split('_', 1)[0]))
 
+focal_patient_id = [10, 16, 40, 60, 89, 90, 91, 92, 94, 95, 99, 100, 101, 112]
+flutter_patient_id = []
+
 for data_id in range(len(clinical_file_paths)):
     file_path = clinical_file_paths[data_id]
     name_prefix = file_path.stem.replace('_carto_catheter_processed', '')
-
-    print(f'{name_prefix}, {data_id} of [0, {len(clinical_file_paths)}]')
+    patient_id = int(name_prefix.split('_', 1)[0])
 
     output_path = parameters['processed_clinical_data'] / f'{name_prefix}_clinical_data.npz'
+
+    if not output_path.exists() and patient_id in focal_patient_id:
+        print(f'{name_prefix}, {data_id} of [0, {len(clinical_file_paths)}]')
     if output_path.exists():
         continue
 

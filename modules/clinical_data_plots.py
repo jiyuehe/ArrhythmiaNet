@@ -24,6 +24,14 @@ COMMON_DIR = Path('/home/j/Documents/box/codes/common')
 sys.path.insert(0, str(COMMON_DIR))
 import common
 
+CAMERA_ELEV = np.deg2rad(70)
+CAMERA_AZIM = np.deg2rad(-70)
+CAMERA_EYE = {
+    'x': 2.2 * np.cos(CAMERA_ELEV) * np.cos(CAMERA_AZIM),
+    'y': 2.2 * np.cos(CAMERA_ELEV) * np.sin(CAMERA_AZIM),
+    'z': 2.2 * np.sin(CAMERA_ELEV),
+}
+
 #%%
 def electrogram_and_activation(activation_times, electrogram, n_time, electrogram_qrs_subtracted, file_path, parameters):
     # plot some electrograms with their activation markers
@@ -205,12 +213,14 @@ def electrode_positions_and_activation_color(
         )
 
     activation_fig.update_layout(
-        title=f'{file_path.name}: activation map',
+        dragmode='orbit',
+        showlegend=False,
         scene={
-            'xaxis_title': 'X',
-            'yaxis_title': 'Y',
-            'zaxis_title': 'Z',
             'aspectmode': 'data',
+            'camera': {'eye': CAMERA_EYE},
+            'xaxis': {'visible': False},
+            'yaxis': {'visible': False},
+            'zaxis': {'visible': False},
         },
         template='plotly_white',
     )
@@ -322,12 +332,14 @@ def electrode_voxel_mapping(
         )
 
     mapping_fig.update_layout(
-        title=f'{file_path.name}: electrode-voxel mapping',
+        dragmode='orbit',
+        showlegend=False,
         scene={
-            'xaxis_title': 'X',
-            'yaxis_title': 'Y',
-            'zaxis_title': 'Z',
             'aspectmode': 'data',
+            'camera': {'eye': CAMERA_EYE},
+            'xaxis': {'visible': False},
+            'yaxis': {'visible': False},
+            'zaxis': {'visible': False},
         },
         template='plotly_white',
     )
