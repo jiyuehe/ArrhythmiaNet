@@ -89,11 +89,20 @@ for data_id in range(len(clinical_file_paths)):
     electrogram_qrs_subtracted = electrogram_qrs_subtracted[valid_activation_times]
     electrode_positions = electrode_positions[valid_activation_times]
 
-    # keep 50 ms centered on activation, with a 25 ms cosine taper on each side.
+    # apply a window to preserve only a single activation: retain a 50 ms window centered on the activation, with a 25 ms cosine taper on each side
     distance_from_activation = np.abs(np.arange(n_time)[None, :] - activation_times[:, None])
     taper_fraction = np.clip((distance_from_activation - 25) / 25, 0, 1)
     window = 0.5 * (1 + np.cos(np.pi * taper_fraction))
     electrogram_qrs_subtracted_cleaned = electrogram_qrs_subtracted * window
+
+    # remove those of small peak-to-peak electrogram_qrs_subtracted_cleaned
+    minimum_peak_to_peak = 1 # unit: mV
+    valid_peak_to_peak = (np.ptp(electrogram_qrs_subtracted_cleaned, axis=1) >= minimum_peak_to_peak)
+    activation_times = activation_times[valid_peak_to_peak]
+    electrogram = electrogram[valid_peak_to_peak]
+    electrogram_qrs_subtracted = electrogram_qrs_subtracted[valid_peak_to_peak]
+    electrogram_qrs_subtracted_cleaned = electrogram_qrs_subtracted_cleaned[valid_peak_to_peak]
+    electrode_positions = electrode_positions[valid_peak_to_peak]
 
     debug_plot = 1
     if debug_plot == 1:
@@ -127,9 +136,9 @@ for data_id in range(len(clinical_file_paths)):
     electrogram_on_voxel = np.full((n_voxel, n_time), np.nan, dtype=np.float32)
     electrogram_qrs_subtracted_cleaned_on_voxel = np.full((n_voxel, n_time), np.nan, dtype=np.float32)
 
-    # Use face normals from the refined geometry when available.  Each voxel
-    # is matched to the refined vertex stored in vertex_id_of_voxel.
+    # use face normals from the refined geometry when available. each voxel is matched to the refined vertex stored in vertex_id_of_voxel.
     voxel_normals = np.full((n_voxel, 3), np.nan, dtype=np.float64)
+
     # if 'vertex' in geometry and 'face' in geometry and 'vertex_id_of_voxel' in geometry:
     vertex = np.asarray(geometry['vertex'], dtype=np.float64)
     face = np.asarray(geometry['face'], dtype=np.int64)
