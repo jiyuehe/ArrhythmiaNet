@@ -134,7 +134,9 @@ def train_model(parameters, arrhythmia_flag):
             
             # accumulate training loss
             train_loss += loss.item()
-        
+
+        print('\n')
+              
         # average training loss over all batches
         train_loss /= n_train_batches
         train_loss_history.append(train_loss)
@@ -171,6 +173,8 @@ def train_model(parameters, arrhythmia_flag):
                 # accumulate loss
                 val_loss += loss.item()
 
+            print('\n')
+
         # explanation: 
         # with torch.no_grad():
         #     # code block
@@ -201,7 +205,7 @@ def train_model(parameters, arrhythmia_flag):
             torch.save(parameters['model'].state_dict(), parameters['result_folder'] / 'best_unet_model.pth') # save best model
         elif val_loss >= best_loss:
             epochs_without_improvement += 1
-            print(f'\n  no improvement for {epochs_without_improvement} epoch(s). min val loss: {best_loss*1000:.3f}e-3.')
+            print(f'  no improvement for {epochs_without_improvement} epoch(s). min val loss: {best_loss*1000:.3f}e-3.')
             
             if epochs_without_improvement >= parameters['early_stopping_patience']:
                 print(f"early stopping triggered after {epoch+1} epochs")
@@ -210,7 +214,7 @@ def train_model(parameters, arrhythmia_flag):
     
         epoch_end_time = time.time()
         epoch_duration = (epoch_end_time - epoch_start_time) / 60
-        print(f"\n  training/validation Loss: {train_loss*1000:.3f}e-3 / {val_loss*1000:.3f}e-3")
+        print(f"  training/validation Loss: {train_loss*1000:.3f}e-3 / {val_loss*1000:.3f}e-3")
         print(f"  computation time: {epoch_duration:.2f} minutes")
 
 def predict(parameters, file_names_test, testing_data_flag, arrhythmia_flag):
