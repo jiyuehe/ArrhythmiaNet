@@ -228,7 +228,7 @@ for data_id in range(len(clinical_file_paths)):
     electrogram_on_voxel[voxels_to_unassign] = np.nan
     electrogram_qrs_subtracted_cleaned_on_voxel[voxels_to_unassign] = np.nan
 
-    debug_plot = 0
+    debug_plot = 1
     if debug_plot == 1:
         # show electrodes in gray, the associated voxels in black, and draw a line linking the electrode-voxel pairs
         modules.clinical_data_plots.electrode_voxel_mapping(
@@ -242,7 +242,7 @@ for data_id in range(len(clinical_file_paths)):
 
     debug_plot = 0
     if debug_plot == 1:
-        # show all voxel: electrodes in colors
+        # show all electrode voxels: electrodes in colors
         modules.clinical_data_plots.electrode_positions_and_activation_color(
             voxel,
             activation_time_on_voxel,
